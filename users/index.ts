@@ -12,11 +12,7 @@ const PORT = process.env.PORT!;
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (_, res) => {
-  res.send("Users service is running");
-});
-
-app.post("/users", async (req, res) => {
+app.post("/", async (req, res) => {
   try {
     const { name, email, password, age } = req.body;
     const newUser = new User({ name, email, password, age });
@@ -27,7 +23,7 @@ app.post("/users", async (req, res) => {
   }
 });
 
-app.get("/users", async (_, res) => {
+app.get("/", async (_, res) => {
   try {
     const users = await User.find();
     res.json(users);
@@ -36,7 +32,7 @@ app.get("/users", async (_, res) => {
   }
 });
 
-app.get("/users/:id", async (req, res) => {
+app.get("/:id", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ error: "User not found" });
