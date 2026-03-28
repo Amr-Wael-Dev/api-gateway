@@ -1,0 +1,76 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  users-service:
+    build: ./users
+    env_file:
+      - ./users/.env
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    develop:
+      watch:
+        - action: sync
+          path: ./users
+          target: /app/users
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./users/package.json
+
+  orders-service:
+    build: ./orders
+    env_file:
+      - ./orders/.env
+    depends_on:
+      - mongo
+    networks:
+      - app-network
+    develop:
+      watch:
+        - action: sync
+          path: ./orders
+          target: /app/orders
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./orders/package.json
+
+  gateway:
+    build: ./gateway
+    env_file:
+      - ./gateway/.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - users-service
+      - orders-service
+    networks:
+      - app-network
+    develop:
+      watch:
+        - action: sync
+          path: ./gateway
+          target: /app/gateway
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: ./gateway/package.json
+
+volumes:
+  mongo-data:
+
+networks:
+  app-network:
+    driver: bridge
