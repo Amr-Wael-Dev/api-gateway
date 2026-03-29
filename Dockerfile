@@ -1,28 +1,37 @@
 FROM node:22-alpine AS base
-RUN npm install -g pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 WORKDIR /app
 
 # ---- dev stage ----
 FROM base AS dev
+ARG SERVICE_PATH
 COPY package.json pnpm-workspace.yaml ./
-COPY services/users/package.json ./services/users/
+COPY ${SERVICE_PATH}/package.json ./${SERVICE_PATH}/
 RUN pnpm install
 COPY . .
-WORKDIR /app/services/users
+WORKDIR /app/${SERVICE_PATH}
 CMD ["pnpm", "dev"]
 
 # ---- build stage ----
-# FROM base AS build
-# COPY package.json pnpm-workspace.yaml ./
-# COPY services/users/package.json ./services/users/
-# RUN pnpm install --frozen-lockfile
-# COPY . .
-# RUN pnpm --filter users-service build
+FROM base AS build
+ARG SERVICE_PATH
+COPY package.json pnpm-workspace.yaml ./
+COPY ${SERVICE_PATH}/package.json ./${SERVICE_PATH}/
+RUN pnpm install --frozen-lockfile
+COPY . .
+WORKDIR /app/${SERVICE_PATH}
+RUN pnpm build
 
 # ---- production stage ----
-# FROM node:22-alpine AS prod
-# WORKDIR /app
-# COPY --from=build /app/services/users/dist ./dist
-# COPY --from=build /app/services/users/package.json .
-# RUN npm install --production
-# CMD ["node", "dist/server.js"]
+FROM node:22-alpine AS prod
+ARG SERVICE_PATH
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+WORKDIR /app
+COPY --from=build /app/${SERVICE_PATH}/dist ./dist
+COPY --from=build /app/${SERVICE_PATH}/package.json ./
+RUN pnpm install --prod
+CMD ["node", "dist/server.js"]

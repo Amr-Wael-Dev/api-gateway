@@ -6,7 +6,10 @@ export default [
     files: ["**/*.ts"],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { project: "./services/users/tsconfig.json" },
+      parserOptions: {
+        project: true, // finds the nearest tsconfig.json to each file
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     plugins: { "@typescript-eslint": tsPlugin },
     rules: {

@@ -1,0 +1,26 @@
+services:
+  gateway:
+    build:
+      context: .. # repo root
+      target: dev
+      args:
+        SERVICE_PATH: gateway
+    ports:
+      - "3000:3000"
+      - "9230:9229" # different host debug port to avoid collision
+    environment:
+      - NODE_ENV=development
+      - USERS_SERVICE_URL=http://users-service:3001
+    env_file:
+      - .env
+    depends_on:
+      - users-service
+    networks:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/gateway/src
+        - action: rebuild
+          path: ./package.json

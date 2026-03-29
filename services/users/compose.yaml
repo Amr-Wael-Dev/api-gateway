@@ -1,0 +1,27 @@
+services:
+  users-service:
+    build:
+      context: ../.. # repo root — where the shared Dockerfile lives
+      target: dev
+      args:
+        SERVICE_PATH: services/users
+    ports:
+      - "3001:3001"
+      - "9229:9229"
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://admin:password@mongo:27017/users-db?authSource=admin
+    env_file:
+      - .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - backend
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/services/users/src
+        - action: rebuild
+          path: ./package.json

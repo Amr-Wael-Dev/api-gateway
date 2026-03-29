@@ -1,27 +1,8 @@
-services:
-  users-service:
-    build:
-      context: .
-      target: dev
-    ports:
-      - "3001:3001"
-      - "9229:9229" # debug port
-    environment:
-      - NODE_ENV=development
-      - MONGO_URI=mongodb://admin:password@mongo:27017/users-db?authSource=admin
-    env_file:
-      - ./services/users/.env
-    depends_on:
-      mongo:
-        condition: service_healthy
-    develop:
-      watch:
-        - action: sync # hot-sync TS source files
-          path: ./services/users/src
-          target: /app/services/users/src
-        - action: rebuild # full rebuild on dep changes
-          path: ./services/users/package.json
+include:
+  - gateway/compose.yaml
+  - services/users/compose.yaml
 
+services:
   mongo:
     image: mongo:7
     ports:
@@ -36,6 +17,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - backend
 
 volumes:
   mongo_data:
+
+networks:
+  backend:
+    driver: bridge
