@@ -1,0 +1,41 @@
+services:
+  users-service:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3001:3001"
+      - "9229:9229" # debug port
+    environment:
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://admin:password@mongo:27017/users-db?authSource=admin
+    env_file:
+      - ./services/users/.env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync # hot-sync TS source files
+          path: ./services/users/src
+          target: /app/services/users/src
+        - action: rebuild # full rebuild on dep changes
+          path: ./services/users/package.json
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:
