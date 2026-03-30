@@ -7,14 +7,16 @@ services:
         SERVICE_PATH: gateway
     ports:
       - "3000:3000"
-      - "9230:9229" # different host debug port to avoid collision
+      - "9229:9229"
     environment:
       - NODE_ENV=development
       - USERS_SERVICE_URL=http://users-service:3001
+      - ORDERS_SERVICE_URL=http://orders-service:3002
     env_file:
       - .env
     depends_on:
       - users-service
+      - orders-service
     networks:
       - backend
     develop:

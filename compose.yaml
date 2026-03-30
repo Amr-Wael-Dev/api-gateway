@@ -1,6 +1,7 @@
 include:
   - gateway/compose.yaml
   - services/users/compose.yaml
+  - services/orders/compose.yaml
 
 services:
   mongo:

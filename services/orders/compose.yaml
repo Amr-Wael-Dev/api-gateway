@@ -1,16 +1,16 @@
 services:
-  users-service:
+  orders-service:
     build:
       context: ../.. # repo root — where the shared Dockerfile lives
       target: dev
       args:
-        SERVICE_PATH: services/users
+        SERVICE_PATH: services/orders
     ports:
-      - "3001:3001"
-      - "9230:9229"
+      - "3002:3002"
+      - "9231:9229"
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb://admin:password@mongo:27017/users-db?authSource=admin
+      - MONGO_URI=mongodb://admin:password@mongo:27017/orders-db?authSource=admin
     env_file:
       - .env
     depends_on:
@@ -22,6 +22,6 @@ services:
       watch:
         - action: sync
           path: ./src
-          target: /app/services/users/src
+          target: /app/services/orders/src
         - action: rebuild
           path: ./package.json
