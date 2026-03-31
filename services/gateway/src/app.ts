@@ -6,7 +6,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 const app = express();
 
 const USERS_SERVICE_URL = process.env.USERS_SERVICE_URL!;
-const ORDERS_SERVICE_URL = process.env.ORDERS_SERVICE_URL!;
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 const ALLOWED_ORIGINS = process.env
   .ALLOWED_ORIGINS!.split(",")
   .map((origin) => origin.trim());
@@ -22,9 +22,9 @@ app.use(
 );
 
 app.use(
-  "/orders",
+  "/auth",
   createProxyMiddleware({
-    target: ORDERS_SERVICE_URL,
+    target: AUTH_SERVICE_URL,
     changeOrigin: true,
   }),
 );

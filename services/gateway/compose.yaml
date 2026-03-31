@@ -10,12 +10,12 @@ services:
     environment:
       - NODE_ENV=development
       - USERS_SERVICE_URL=http://users-service:3001
-      - ORDERS_SERVICE_URL=http://orders-service:3002
+      - AUTH_SERVICE_URL=http://auth-service:3002
     env_file:
       - .env
     depends_on:
       - users-service
-      - orders-service
+      - auth-service
     networks:
       - backend
     develop:
