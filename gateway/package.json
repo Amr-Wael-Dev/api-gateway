@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "nodemon",
-    "dev:debug": "nodemon --config nodemon.debug.json",
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",

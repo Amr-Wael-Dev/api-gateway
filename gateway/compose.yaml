@@ -1,13 +1,12 @@
 services:
   gateway:
     build:
-      context: .. # repo root
+      context: ..
       target: dev
       args:
         SERVICE_PATH: gateway
     ports:
       - "3000:3000"
-      - "9229:9229"
     environment:
       - NODE_ENV=development
       - USERS_SERVICE_URL=http://users-service:3001
