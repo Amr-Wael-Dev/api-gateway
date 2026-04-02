@@ -522,35 +522,43 @@ These are concepts that will meaningfully elevate the portfolio piece and expose
 
 ### Phase 1 — Foundation (Weeks 1–3)
 
-- Monorepo setup: pnpm workspaces, shared packages, TypeScript base config
-- Docker Compose: all infra services running locally
-- API Gateway: routing, JWT verification, health checks
-- Auth Service: register, login, JWT issuance, refresh
-- User Service: profile CRUD
+| Task | Status |
+| ---- | ------ |
+| Monorepo setup: pnpm workspaces, shared packages, TypeScript base config | |
+| Docker Compose: all infra services running locally | |
+| API Gateway: routing, JWT verification, health checks | |
+| Auth Service: register, login, JWT issuance, refresh | |
+| User Service: profile CRUD | |
 
 ### Phase 2 — Core Features (Weeks 4–6)
 
-- Resource Service: full CRUD, ownership, pagination
-- BullMQ: queue setup, base Worker and Queue producer classes
-- Notification Service: email + in-app via BullMQ jobs
-- Audit Log Service: event consumption + query API
-- Rate limiting + Circuit Breaker on gateway
+| Task | Status |
+| ---- | ------ |
+| Resource Service: full CRUD, ownership, pagination | |
+| BullMQ: queue setup, base Worker and Queue producer classes | |
+| Notification Service: email + in-app via BullMQ jobs | |
+| Audit Log Service: event consumption + query API | |
+| Rate limiting + Circuit Breaker on gateway | |
 
 ### Phase 3 — Observability & Resilience (Weeks 7–8)
 
-- Prometheus metrics on all services
-- Grafana dashboards (gateway overview + service health + BullMQ queue depth)
-- Dead Letter Queue handling in Notification Service
-- Health check probes wired up
+| Task | Status |
+| ---- | ------ |
+| Prometheus metrics on all services | |
+| Grafana dashboards (gateway overview + service health + BullMQ queue depth) | |
+| Dead Letter Queue handling in Notification Service | |
+| Health check probes wired up | |
 
 ### Phase 4 — Kubernetes & Polish (Weeks 9–10)
 
-- K8s manifests for all services
-- HPA on gateway + resource service
-- Ingress with TLS
-- Swagger docs per service
-- README + architecture diagram
-- (Stretch) gRPC or OpenTelemetry tracing
+| Task | Status |
+| ---- | ------ |
+| K8s manifests for all services | |
+| HPA on gateway + resource service | |
+| Ingress with TLS | |
+| Swagger docs per service | |
+| README + architecture diagram | |
+| (Stretch) gRPC or OpenTelemetry tracing | |
 
 ---
 
