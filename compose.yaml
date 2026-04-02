@@ -22,6 +22,8 @@ services:
       - "6379:6379"
     volumes:
       - redis:/data/redis
+    networks:
+      - backend
 
   # postgres:
   #   image: postgres:18
