@@ -7,6 +7,7 @@ const app = express();
 
 const USERS_SERVICE_URL = process.env.USERS_SERVICE_URL!;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
+const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
 const ALLOWED_ORIGINS = process.env
   .ALLOWED_ORIGINS!.split(",")
   .map((origin) => origin.trim());
@@ -34,6 +35,7 @@ app.use(
   createProxyMiddleware({
     target: USERS_SERVICE_URL,
     changeOrigin: true,
+    headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
   }),
 );
 
@@ -42,6 +44,7 @@ app.use(
   createProxyMiddleware({
     target: AUTH_SERVICE_URL,
     changeOrigin: true,
+    headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
   }),
 );
 
@@ -49,7 +52,9 @@ app.get("/health", async (_req, res) => {
   const checks = await Promise.all(
     services.map(async ({ name, url }) => {
       try {
-        const response = await fetch(`${url}/health`);
+        const response = await fetch(`${url}/health`, {
+          headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+        });
         const body = await response.json();
         return { name, status: response.ok ? "ok" : "error", ...body };
       } catch {
@@ -66,7 +71,9 @@ app.get("/ready", async (_req, res) => {
   const checks = await Promise.all(
     services.map(async ({ name, url }) => {
       try {
-        const response = await fetch(`${url}/ready`);
+        const response = await fetch(`${url}/ready`, {
+          headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+        });
         const body = await response.json();
         return { name, status: response.ok ? "ok" : "error", ...body };
       } catch {
