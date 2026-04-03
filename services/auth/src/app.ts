@@ -24,10 +24,13 @@ app.get("/health", (_req, res) => {
 
 app.get("/ready", async (_req, res) => {
   const checks = await Promise.all([
-    mongoose.connection.db!.admin().ping()
+    mongoose.connection
+      .db!.admin()
+      .ping()
       .then(() => ({ name: "db", status: "ok" }))
       .catch(() => ({ name: "db", status: "error" })),
-    redis.ping()
+    redis
+      .ping()
       .then(() => ({ name: "redis", status: "ok" }))
       .catch(() => ({ name: "redis", status: "error" })),
   ]);
