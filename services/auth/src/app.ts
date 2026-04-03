@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import Redis from "ioredis";
+import authRouter from "./routes/auth.routes";
 
 const redis = new Redis(process.env.REDIS_URL!);
 
@@ -17,6 +18,8 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+app.use(authRouter);
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
