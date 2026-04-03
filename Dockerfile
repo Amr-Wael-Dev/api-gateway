@@ -9,6 +9,7 @@ FROM base AS dev
 ARG SERVICE_PATH
 COPY package.json pnpm-workspace.yaml ./
 COPY ${SERVICE_PATH}/package.json ./${SERVICE_PATH}/
+COPY shared/types/package.json ./shared/types/
 RUN pnpm install
 COPY . .
 WORKDIR /app/${SERVICE_PATH}
@@ -19,6 +20,7 @@ FROM base AS build
 ARG SERVICE_PATH
 COPY package.json pnpm-workspace.yaml ./
 COPY ${SERVICE_PATH}/package.json ./${SERVICE_PATH}/
+COPY shared/types/package.json ./shared/types/
 RUN pnpm install --frozen-lockfile
 COPY . .
 WORKDIR /app/${SERVICE_PATH}

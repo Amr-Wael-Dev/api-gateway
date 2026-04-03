@@ -1,10 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
-import Redis from "ioredis";
+import redis from "./lib/redis";
 import authRouter from "./routes/auth.routes";
-
-const redis = new Redis(process.env.REDIS_URL!);
 
 const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
 

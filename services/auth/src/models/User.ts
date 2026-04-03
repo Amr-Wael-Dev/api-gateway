@@ -1,17 +1,7 @@
-import { Document, Schema, model } from "mongoose";
+import { Schema, model, HydratedDocument, InferSchemaType } from "mongoose";
 import { UserRole } from "@shared/types";
 
-interface IUser extends Document {
-  email: string;
-  passwordHash: string;
-  role: UserRole;
-  isEmailVerified: boolean;
-  isDeleted: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const UserSchema = new Schema<IUser>(
+const UserSchema = new Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true },
     passwordHash: { type: String, required: true },
@@ -26,6 +16,8 @@ const UserSchema = new Schema<IUser>(
   { timestamps: true },
 );
 
-const User = model<IUser>("User", UserSchema);
+type UserSchemaType = InferSchemaType<typeof UserSchema>;
+export type IUser = HydratedDocument<UserSchemaType>;
 
+const User = model<IUser>("User", UserSchema);
 export default User;
