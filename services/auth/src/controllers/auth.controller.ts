@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import redis from "../lib/redis";
-import { generateAccessToken } from "../helpers";
+import { e, generateAccessToken, KID, kty, n } from "../helpers";
 
 const RegisterRequest = z.object({
   email: z.email("Invalid email address"),
@@ -133,12 +133,15 @@ export async function logout(req: Request, res: Response) {
   }
 
   const { refreshToken, accessToken } = data;
-  const oldRefreshTokenName = getRefreshTokenRedisName(refreshToken);
-  await redis.del(oldRefreshTokenName);
 
-  const decodedpayload = jwt.verify(accessToken, JWT_PUBLIC_KEY, {
-    ignoreExpiration: true,
-  });
+  let decodedpayload = null;
+  try {
+    decodedpayload = jwt.verify(accessToken, JWT_PUBLIC_KEY, {
+      ignoreExpiration: true,
+    });
+  } catch {
+    return res.status(400).json({ error: "Invalid token" });
+  }
   const { jti, exp } = decodedpayload as jwt.JwtPayload;
 
   if (!exp || !jti) {
@@ -146,10 +149,19 @@ export async function logout(req: Request, res: Response) {
   }
 
   const remTTL = exp - Math.floor(Date.now() / 1000);
-  if (remTTL <= 0) {
-    return res.status(400).json({ error: "Invalid token" });
+
+  const oldRefreshTokenName = getRefreshTokenRedisName(refreshToken);
+  await redis.del(oldRefreshTokenName);
+
+  if (remTTL > 0) {
+    await redis.set(getBlocklistRedisName(jti), "1", "EX", remTTL);
   }
 
-  await redis.set(getBlocklistRedisName(jti), "1", "EX", remTTL);
   return res.status(204).send();
+}
+
+export async function jwks(_req: Request, res: Response) {
+  return res.status(200).json({
+    keys: [{ kty, n, e, kid: KID, use: "sig", alg: "RS256" }],
+  });
 }
