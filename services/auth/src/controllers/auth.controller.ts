@@ -1,5 +1,6 @@
 import type { Response, Request } from "express";
-import * as z from "zod";
+import z from "zod";
+import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import redis from "../lib/redis";
@@ -24,10 +25,18 @@ const RefreshRequest = z.object({
   refreshToken: z.uuid(),
 });
 
+const LogoutRequest = z.object({
+  accessToken: z.string().min(1),
+  refreshToken: z.uuid(),
+});
+
 const saltRounds = 10;
+const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY!;
 const REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+
 const getRefreshTokenRedisName = (token: string) =>
   `auth:refresh-token:${token}`;
+const getBlocklistRedisName = (jti: string) => `auth:blocklist:${jti}`;
 
 export async function register(req: Request, res: Response) {
   const { success, data, error } = RegisterRequest.safeParse(req.body);
@@ -114,4 +123,33 @@ export async function refresh(req: Request, res: Response) {
   await redis.del(oldRefreshTokenName);
 
   return res.status(200).json({ refreshToken, accessToken });
+}
+
+export async function logout(req: Request, res: Response) {
+  const { success, data, error } = LogoutRequest.safeParse(req.body);
+
+  if (!success) {
+    return res.status(400).json({ error: z.treeifyError(error) });
+  }
+
+  const { refreshToken, accessToken } = data;
+  const oldRefreshTokenName = getRefreshTokenRedisName(refreshToken);
+  await redis.del(oldRefreshTokenName);
+
+  const decodedpayload = jwt.verify(accessToken, JWT_PUBLIC_KEY, {
+    ignoreExpiration: true,
+  });
+  const { jti, exp } = decodedpayload as jwt.JwtPayload;
+
+  if (!exp || !jti) {
+    return res.status(400).json({ error: "Invalid token" });
+  }
+
+  const remTTL = exp - Math.floor(Date.now() / 1000);
+  if (remTTL <= 0) {
+    return res.status(400).json({ error: "Invalid token" });
+  }
+
+  await redis.set(getBlocklistRedisName(jti), "1", "EX", remTTL);
+  return res.status(204).send();
 }
