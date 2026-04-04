@@ -239,7 +239,7 @@ describe("POST /register", () => {
         .set("x-inter-service-token", INTER_SERVICE_TOKEN)
         .send({
           email: "pw-exact16@example.com",
-          password: "Ab1@56789012345",
+          password: "Ab1@567890123456",
         });
 
       expect(res.status).toBe(201);
