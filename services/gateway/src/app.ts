@@ -1,7 +1,11 @@
 import "dotenv/config";
 import express from "express";
+import type { Response, Request, NextFunction } from "express";
 import cors from "cors";
+import JwksRsa from "jwks-rsa";
+import jwt from "jsonwebtoken";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import redis from "./lib/redis";
 
 const app = express();
 
@@ -28,10 +32,60 @@ const services: Service[] = [
   },
 ];
 
+const getBlocklistRedisName = (jti: string) => `auth:blocklist:${jti}`;
+const jwksClient = JwksRsa({ jwksUri: `${AUTH_SERVICE_URL}/jwks` });
+async function getKey(kid: string) {
+  const key = await jwksClient.getSigningKey(kid);
+  const signingKey = key.getPublicKey();
+  return signingKey;
+}
+async function authenticateToken(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const { header } = jwt.decode(token, {
+      complete: true,
+    }) as jwt.Jwt;
+    const { kid } = header;
+
+    if (!kid) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const key = await getKey(kid);
+    const verified = jwt.verify(token, key) as jwt.JwtPayload;
+    const isBlocked =
+      verified.jti &&
+      (await redis.get(getBlocklistRedisName(verified.jti))) === "1";
+
+    if (verified && !isBlocked) {
+      req.headers["x-user-id"] = verified.sub;
+      req.headers["x-user-role"] = verified.role;
+      req.headers["x-user-email"] = verified.email;
+
+      return next();
+    }
+
+    return res.status(403).json({ message: "Forbidden" });
+  } catch {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+}
+
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 
 app.use(
   "/users",
+  authenticateToken,
   createProxyMiddleware({
     target: USERS_SERVICE_URL,
     changeOrigin: true,
