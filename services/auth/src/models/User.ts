@@ -13,7 +13,16 @@ const UserSchema = new Schema(
     isEmailVerified: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      transform(_doc, ret: Record<string, unknown>) {
+        delete ret.passwordHash;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  },
 );
 
 type UserSchemaType = InferSchemaType<typeof UserSchema>;

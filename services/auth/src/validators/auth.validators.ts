@@ -1,7 +1,7 @@
 import z from "zod";
 
 export const RegisterRequest = z.object({
-  email: z.email("Invalid email address"),
+  email: z.email().max(254),
   password: z
     .string()
     .regex(

@@ -2,6 +2,7 @@ import type { Response, Request } from "express";
 import z from "zod";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { MongoServerError } from "mongodb";
 import User from "../models/User";
 import redis from "../lib/redis";
 import { e, generateAccessToken, KID, kty, n } from "../lib/jwt";
@@ -36,7 +37,18 @@ export async function register(req: Request, res: Response) {
 
   const passwordHash = await bcrypt.hash(password, saltRounds);
 
-  const { id, email: userEmail } = await User.create({ email, passwordHash });
+  let id, userEmail;
+  try {
+    const createResponse = await User.create({ email, passwordHash });
+    id = createResponse.id;
+    userEmail = createResponse.email;
+  } catch (error: unknown) {
+    if (error instanceof MongoServerError && error.code === 11000) {
+      return res.status(409).json({ error: "Conflict" });
+    }
+
+    throw error;
+  }
 
   return res
     .status(201)
