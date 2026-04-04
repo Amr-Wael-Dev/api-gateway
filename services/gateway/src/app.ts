@@ -77,7 +77,7 @@ async function authenticateToken(
 
     return res.status(403).json({ message: "Forbidden" });
   } catch {
-    return res.status(403).json({ message: "Forbidden" });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 }
 

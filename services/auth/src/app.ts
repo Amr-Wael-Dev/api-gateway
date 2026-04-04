@@ -3,11 +3,14 @@ import express from "express";
 import mongoose from "mongoose";
 import redis from "./lib/redis";
 import authRouter from "./routes/auth.routes";
+import { jwks } from "./controllers/auth.controller";
 
 const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
 
 const app = express();
 app.use(express.json());
+
+app.get("/jwks", jwks);
 
 app.use((req, res, next) => {
   if (req.headers["x-inter-service-token"] !== INTER_SERVICE_TOKEN) {
