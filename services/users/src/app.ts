@@ -2,21 +2,14 @@ import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import Redis from "ioredis";
+import { interServiceAuth } from "./middleware/interServiceAuth";
 
 const redis = new Redis(process.env.REDIS_URL!);
-
-const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
 
 const app = express();
 app.use(express.json());
 
-app.use((req, res, next) => {
-  if (req.headers["x-inter-service-token"] !== INTER_SERVICE_TOKEN) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  next();
-});
+app.use(interServiceAuth);
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });

@@ -4,21 +4,14 @@ import mongoose from "mongoose";
 import redis from "./lib/redis";
 import authRouter from "./routes/auth.routes";
 import { jwks } from "./controllers/auth.controller";
-
-const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
+import { interServiceAuth } from "./middleware/interServiceAuth";
 
 const app = express();
 app.use(express.json());
 
 app.get("/jwks", jwks);
 
-app.use((req, res, next) => {
-  if (req.headers["x-inter-service-token"] !== INTER_SERVICE_TOKEN) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
-  next();
-});
+app.use(interServiceAuth);
 
 app.use(authRouter);
 

@@ -4,31 +4,13 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import redis from "../lib/redis";
-import { e, generateAccessToken, KID, kty, n } from "../helpers";
-
-const RegisterRequest = z.object({
-  email: z.email("Invalid email address"),
-  password: z
-    .string()
-    .regex(
-      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[^a-zA-Z0-9]).{8,16}$/,
-      "A password should be at least 8 characters and at most 16 characters. It should contain at least 1 lowercase character, 1 uppercase character, 1 digit, and 1 special character",
-    ),
-});
-
-const LoginRequest = z.object({
-  email: z.email("Invalid email address"),
-  password: z.string().min(1),
-});
-
-const RefreshRequest = z.object({
-  refreshToken: z.uuid(),
-});
-
-const LogoutRequest = z.object({
-  accessToken: z.string().min(1),
-  refreshToken: z.uuid(),
-});
+import { e, generateAccessToken, KID, kty, n } from "../lib/jwt";
+import {
+  RegisterRequest,
+  LoginRequest,
+  RefreshRequest,
+  LogoutRequest,
+} from "../validators/auth.validators";
 
 const saltRounds = 10;
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY!;
