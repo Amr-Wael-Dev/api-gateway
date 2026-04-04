@@ -1,10 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
-import Redis from "ioredis";
 import { interServiceAuth } from "./middleware/interServiceAuth";
-
-const redis = new Redis(process.env.REDIS_URL!);
+import redis from "./lib/redis";
 
 const app = express();
 app.use(express.json());

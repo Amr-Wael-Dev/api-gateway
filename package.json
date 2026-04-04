@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "dev": "pnpm -r --parallel run dev",
-    "test": "pnpm -r --parallel run test",
+    "test": "pnpm --filter @shared/types build && pnpm -r --parallel run test",
     "build": "pnpm -r run build",
     "type-check": "pnpm -r run type-check",
     "lint": "eslint .",

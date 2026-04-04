@@ -1,5 +1,12 @@
 node_modules/
 dist/
 coverage/
-.env
 .vscode/
+
+# Keep examples
+.env
+.env.local
+.env.*.local
+.env.test
+!.env.example
+!.env.*.example

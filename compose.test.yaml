@@ -1,0 +1,12 @@
+services:
+  redis-test:
+    image: redis:8
+    ports:
+      - "6380:6379"
+    tmpfs:
+      - /data
+    networks:
+      - backend
+networks:
+  backend:
+    driver: bridge
