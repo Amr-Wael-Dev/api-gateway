@@ -1,25 +1,40 @@
 import "dotenv/config";
-import express from "express";
+import express, {
+  type NextFunction,
+  type Request,
+  type Response,
+} from "express";
 import mongoose from "mongoose";
+import rateLimit, { MemoryStore, type Store } from "express-rate-limit";
+import { RedisStore, type RedisReply } from "rate-limit-redis";
 import redis from "./lib/redis";
 import authRouter from "./routes/auth.routes";
 import { jwks } from "./controllers/auth.controller";
 import { interServiceAuth } from "./middleware/interServiceAuth";
 
+const limiter = (limit: number, store: Store) =>
+  rateLimit({
+    windowMs: 1 * 60 * 1000,
+    limit,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    store,
+  });
+const redisStore = (prefix: string) =>
+  new RedisStore({
+    prefix,
+    sendCommand: (...args: string[]) =>
+      redis.call(args[0], ...args.slice(1)) as Promise<RedisReply>,
+  });
+
 const app = express();
 app.use(express.json());
 
-app.get("/jwks", jwks);
-
-app.use(interServiceAuth);
-
-app.use(authRouter);
-
-app.get("/health", (_req, res) => {
+app.get("/jwks", limiter(60, new MemoryStore()), jwks);
+app.get("/health", limiter(60, new MemoryStore()), (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
-
-app.get("/ready", async (_req, res) => {
+app.get("/ready", limiter(60, new MemoryStore()), async (_req, res) => {
   const checks = await Promise.all([
     mongoose.connection
       .db!.admin()
@@ -34,6 +49,22 @@ app.get("/ready", async (_req, res) => {
 
   const allOk = checks.every((c) => c.status === "ok");
   res.status(allOk ? 200 : 503).json(checks);
+});
+
+app.use(interServiceAuth);
+app.use(limiter(10, redisStore("auth:rate-limit:")));
+app.use(authRouter);
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error(`[Auth - ${new Date().toISOString()}] ${error.stack}`);
+
+  if (error.message.includes("ECONNREFUSED")) {
+    console.error(`[Auth] Redis is down — status: ${redis.status}`);
+    return res.status(503).json({ message: "Service unavailable: redis" });
+  }
+
+  res.status(500).json({ message: "Internal Server Error" });
 });
 
 export default app;
