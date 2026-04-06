@@ -25,14 +25,14 @@ export async function register(req: Request, res: Response) {
   const { success, data, error } = RegisterRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ error: z.treeifyError(error) });
+    return res.status(400).json({ message: z.treeifyError(error) });
   }
 
   const { email, password } = data;
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return res.status(409).json({ error: "Conflict" });
+    return res.status(409).json({ message: "Conflict" });
   }
 
   const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -44,35 +44,37 @@ export async function register(req: Request, res: Response) {
     userEmail = createResponse.email;
   } catch (error: unknown) {
     if (error instanceof MongoServerError && error.code === 11000) {
-      return res.status(409).json({ error: "Conflict" });
+      return res.status(409).json({ message: "Conflict" });
     }
 
     throw error;
   }
 
-  return res
-    .status(201)
-    .json({ message: "User registered successfully", id, email: userEmail });
+  return res.status(201).json({ id, email: userEmail });
 }
 
 export async function login(req: Request, res: Response) {
   const { success, data, error } = LoginRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ error: z.treeifyError(error) });
+    return res.status(400).json({ message: z.treeifyError(error) });
   }
 
   const { email, password } = data;
 
   const user = await User.findOne({ email });
   if (!user) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  if (user.isDeleted) {
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordCorrect) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   const accessToken = generateAccessToken(user);
@@ -91,19 +93,19 @@ export async function refresh(req: Request, res: Response) {
   const { success, data, error } = RefreshRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ error: z.treeifyError(error) });
+    return res.status(400).json({ message: z.treeifyError(error) });
   }
 
   const { refreshToken: oldRefreshToken } = data;
   const oldRefreshTokenName = getRefreshTokenRedisName(oldRefreshToken);
   const userId = await redis.get(oldRefreshTokenName);
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   const accessToken = generateAccessToken(user);
@@ -123,7 +125,7 @@ export async function logout(req: Request, res: Response) {
   const { success, data, error } = LogoutRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ error: z.treeifyError(error) });
+    return res.status(400).json({ message: z.treeifyError(error) });
   }
 
   const { refreshToken, accessToken } = data;
@@ -134,12 +136,12 @@ export async function logout(req: Request, res: Response) {
       ignoreExpiration: true,
     });
   } catch {
-    return res.status(400).json({ error: "Invalid token" });
+    return res.status(400).json({ message: "Invalid token" });
   }
   const { jti, exp } = decodedpayload as jwt.JwtPayload;
 
   if (!exp || !jti) {
-    return res.status(400).json({ error: "Invalid token" });
+    return res.status(400).json({ message: "Invalid token" });
   }
 
   const remTTL = exp - Math.floor(Date.now() / 1000);

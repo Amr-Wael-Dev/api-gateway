@@ -23,7 +23,7 @@ export async function authenticateToken(
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 
   try {
@@ -31,7 +31,7 @@ export async function authenticateToken(
     const { kid } = header;
 
     if (!kid) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const key = await getKey(kid);
@@ -49,6 +49,6 @@ export async function authenticateToken(
 
     return res.status(403).json({ message: "Forbidden" });
   } catch {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ message: "Unauthorized" });
   }
 }

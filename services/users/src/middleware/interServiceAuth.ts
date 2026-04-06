@@ -8,7 +8,7 @@ export function interServiceAuth(
   next: NextFunction,
 ) {
   if (req.headers["x-inter-service-token"] !== INTER_SERVICE_TOKEN) {
-    res.status(403).json({ error: "Forbidden" });
+    res.status(403).json({ message: "Forbidden" });
     return;
   }
   next();
