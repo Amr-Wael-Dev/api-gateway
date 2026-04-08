@@ -471,8 +471,6 @@ describe("POST /login", () => {
       expect(keys).toEqual(["accessToken", "refreshToken"]);
     });
 
-    // This test reflects correct production behavior.
-    // It currently FAILS because the login controller does not check isDeleted.
     it("returns 401 for a soft-deleted user", async () => {
       const email = `deleted-${Date.now()}@example.com`;
       await registerUser(email);
@@ -486,8 +484,7 @@ describe("POST /login", () => {
       expect(res.status).toBe(401);
     });
 
-    // This test reflects correct production behavior.
-    // It currently FAILS because no rate limiting is implemented.
+    // PRD requires per-IP brute-force rate limiting. Not yet implemented at the service level.
     it("returns 429 after too many consecutive failed login attempts (brute force protection)", async () => {
       const email = `brute-${Date.now()}@example.com`;
       await registerUser(email);
@@ -511,8 +508,7 @@ describe("POST /login", () => {
       expect(finalAttempt.status).toBe(429);
     });
 
-    // This test reflects correct production behavior.
-    // It currently FAILS because no rate limiting is implemented.
+    // PRD requires per-IP brute-force rate limiting. Not yet implemented at the service level.
     it("rate limiting applies to non-existent email probing as well (prevents account enumeration via timing)", async () => {
       const attempts = Array.from({ length: 10 }, () =>
         request(app)

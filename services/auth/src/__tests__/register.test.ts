@@ -451,13 +451,42 @@ describe("POST /register", () => {
       expect(res.status).toBe(201);
 
       const bodyKeys = Object.keys(res.body);
-      expect(bodyKeys).toEqual(
-        expect.arrayContaining(["id", "email"]),
-      );
+      expect(bodyKeys).toEqual(expect.arrayContaining(["id", "email"]));
       expect(bodyKeys).not.toContain("passwordHash");
       expect(bodyKeys).not.toContain("password");
       expect(bodyKeys).not.toContain("_id");
       expect(bodyKeys).not.toContain("__v");
     });
+  });
+
+  // RFC 7807 compliance — PRD mandates Problem Details error format.
+  // The service currently returns { message } instead of:
+  // { type, title, status, detail, instance, correlationId }
+  // These todos document the gap. Do not change existing passing tests.
+  describe("RFC 7807 compliance (todo — not yet implemented)", () => {
+    it.todo(
+      "error response for missing email contains 'type' field (RFC 7807 Problem Details)",
+    );
+    it.todo(
+      "error response for missing email contains 'title' field (RFC 7807 Problem Details)",
+    );
+    it.todo(
+      "error response for missing email contains 'status' field equal to 400 (RFC 7807 Problem Details)",
+    );
+    it.todo(
+      "error response for missing email contains 'detail' field with human-readable description (RFC 7807 Problem Details)",
+    );
+    it.todo(
+      "error response for missing email contains 'instance' field with request path (RFC 7807 Problem Details)",
+    );
+    it.todo(
+      "error response for missing email contains 'correlationId' field (RFC 7807 Problem Details)",
+    );
+    it.todo(
+      "409 conflict error response follows RFC 7807 format with type, title, status, detail, instance, correlationId",
+    );
+    it.todo(
+      "all 400 validation errors follow RFC 7807 format — not { message } shape",
+    );
   });
 });

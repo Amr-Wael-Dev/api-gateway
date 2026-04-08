@@ -1,18 +1,15 @@
 import jwt from "jsonwebtoken";
-import nodeCrypto from "node:crypto";
+import crypto from "node:crypto";
 import { IUser } from "../models/User";
 
 const JWT_PRIVATE_KEY = process.env.JWT_PRIVATE_KEY!;
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY!;
 
-export const { e, kty, n } = nodeCrypto
+export const { e, kty, n } = crypto
   .createPublicKey(JWT_PUBLIC_KEY)
   .export({ format: "jwk" });
 const serialized = JSON.stringify({ e, kty, n });
-const encoded = nodeCrypto
-  .createHash("sha256")
-  .update(serialized)
-  .digest("base64");
+const encoded = crypto.createHash("sha256").update(serialized).digest("base64");
 export const KID = encoded
   .replaceAll("+", "-")
   .replaceAll("/", "_")
