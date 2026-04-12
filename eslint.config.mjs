@@ -18,6 +18,11 @@ export default [
     },
   },
   {
-    ignores: ["**/dist/**", "**/node_modules/**", "**/coverage/**", "**/vitest.config.ts"],
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/coverage/**",
+      "**/vitest.config.ts",
+    ],
   },
 ];

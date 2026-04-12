@@ -9,6 +9,7 @@ import rateLimit, {
   type Options,
 } from "express-rate-limit";
 import { RedisStore, type RedisReply } from "rate-limit-redis";
+import swaggerUi from "swagger-ui-express";
 import redis from "./lib/redis";
 import { authenticateToken } from "./middleware/authenticate";
 import { probeServices } from "./lib/serviceProbes";
@@ -44,6 +45,25 @@ const redisStore = (prefix: string) =>
   });
 
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
+
+app.use(
+  "/docs/auth",
+  createProxyMiddleware({
+    target: AUTH_SERVICE_URL,
+    changeOrigin: true,
+    pathRewrite: { "^/docs/auth": "" },
+    headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+  }),
+);
+app.use(
+  "/docs",
+  swaggerUi.serve,
+  swaggerUi.setup(null, {
+    swaggerOptions: {
+      urls: [{ url: "/docs/auth/docs.json", name: "Auth Service" }],
+    },
+  }),
+);
 
 app.use(
   "/users",
