@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import request from "supertest";
-import app from "../app";
 import User from "../models/User";
 import redis from "../lib/redis";
+import app from "../app";
 
 const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
 
@@ -24,13 +24,11 @@ async function registerUser(
 }
 
 function decodeJwtPayload(token: string): Record<string, unknown> {
-  const parts = token.split(".");
-  return JSON.parse(Buffer.from(parts[1], "base64url").toString());
+  return JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
 }
 
 function decodeJwtHeader(token: string): Record<string, unknown> {
-  const parts = token.split(".");
-  return JSON.parse(Buffer.from(parts[0], "base64url").toString());
+  return JSON.parse(Buffer.from(token.split(".")[0], "base64url").toString());
 }
 
 describe("POST /login", () => {
@@ -458,7 +456,7 @@ describe("POST /login", () => {
       expect(res.body).not.toHaveProperty("password");
     });
 
-    it("response body contains only accessToken and refreshToken (no extra fields)", async () => {
+    it("response body contains only accessToken and refreshToken", async () => {
       await registerUser(VALID_EMAIL);
 
       const res = await request(app)
@@ -471,8 +469,6 @@ describe("POST /login", () => {
       expect(keys).toEqual(["accessToken", "refreshToken"]);
     });
 
-    // This test reflects correct production behavior.
-    // It currently FAILS because the login controller does not check isDeleted.
     it("returns 401 for a soft-deleted user", async () => {
       const email = `deleted-${Date.now()}@example.com`;
       await registerUser(email);
@@ -486,21 +482,15 @@ describe("POST /login", () => {
       expect(res.status).toBe(401);
     });
 
-    // This test reflects correct production behavior.
-    // It currently FAILS because no rate limiting is implemented.
     it("returns 429 after too many consecutive failed login attempts (brute force protection)", async () => {
       const email = `brute-${Date.now()}@example.com`;
       await registerUser(email);
 
-      const attempts = Array.from({ length: 10 }, () =>
-        request(app)
+      for (let i = 0; i < 11; i++) {
+        await request(app)
           .post("/login")
           .set("x-inter-service-token", INTER_SERVICE_TOKEN)
-          .send({ email, password: "Wr0ng@Pass" }),
-      );
-
-      for (const attempt of attempts) {
-        await attempt;
+          .send({ email, password: "Wr0ng@Pass" });
       }
 
       const finalAttempt = await request(app)
@@ -511,24 +501,20 @@ describe("POST /login", () => {
       expect(finalAttempt.status).toBe(429);
     });
 
-    // This test reflects correct production behavior.
-    // It currently FAILS because no rate limiting is implemented.
-    it("rate limiting applies to non-existent email probing as well (prevents account enumeration via timing)", async () => {
-      const attempts = Array.from({ length: 10 }, () =>
-        request(app)
+    it("rate limiting applies to non-existent email probing (prevents account enumeration via timing)", async () => {
+      const email = `probe-${Date.now()}@example.com`;
+
+      for (let i = 0; i < 11; i++) {
+        await request(app)
           .post("/login")
           .set("x-inter-service-token", INTER_SERVICE_TOKEN)
-          .send({ email: "probe@example.com", password: "Wr0ng@Pass" }),
-      );
-
-      for (const attempt of attempts) {
-        await attempt;
+          .send({ email, password: "Wr0ng@Pass" });
       }
 
       const finalAttempt = await request(app)
         .post("/login")
         .set("x-inter-service-token", INTER_SERVICE_TOKEN)
-        .send({ email: "probe@example.com", password: "Wr0ng@Pass" });
+        .send({ email, password: "Wr0ng@Pass" });
 
       expect(finalAttempt.status).toBe(429);
     });
@@ -600,12 +586,11 @@ describe("POST /login", () => {
     it("returns 503 when Redis is unavailable (refresh token cannot be persisted)", async () => {
       await registerUser(VALID_EMAIL);
 
-      // Force Redis into an error state for this request
       const originalSet = redis.set.bind(redis);
       (redis as unknown as Record<string, unknown>).set = () =>
         Promise.reject(new Error("ECONNREFUSED"));
 
-      let res;
+      let res: { status: number } | undefined;
       try {
         res = await request(app)
           .post("/login")

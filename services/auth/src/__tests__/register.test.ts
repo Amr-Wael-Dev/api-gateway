@@ -3,7 +3,6 @@ import request from "supertest";
 import app from "../app";
 
 const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
-
 const VALID_EMAIL = "test@example.com";
 const VALID_PASSWORD = "Test@1234";
 
@@ -33,7 +32,7 @@ describe("POST /register", () => {
     });
   });
 
-  describe("success case", () => {
+  describe("success cases", () => {
     it("returns 201 with user id and email on success", async () => {
       const res = await request(app)
         .post("/register")
@@ -74,6 +73,22 @@ describe("POST /register", () => {
 
       expect(res.status).toBe(201);
       expect(res.body.email).toBe("user+tag@example.com");
+    });
+
+    it("ignores unknown fields in request body", async () => {
+      const res = await request(app)
+        .post("/register")
+        .set("x-inter-service-token", INTER_SERVICE_TOKEN)
+        .send({
+          email: "extra@example.com",
+          password: VALID_PASSWORD,
+          role: "admin",
+          isAdmin: true,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body).not.toHaveProperty("role");
+      expect(res.body).not.toHaveProperty("isAdmin");
     });
   });
 
@@ -203,6 +218,30 @@ describe("POST /register", () => {
 
       expect(res.status).toBe(400);
     });
+
+    it("returns 400 for email missing local part", async () => {
+      const res = await request(app)
+        .post("/register")
+        .set("x-inter-service-token", INTER_SERVICE_TOKEN)
+        .send({
+          email: "@example.com",
+          password: VALID_PASSWORD,
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 for email missing domain", async () => {
+      const res = await request(app)
+        .post("/register")
+        .set("x-inter-service-token", INTER_SERVICE_TOKEN)
+        .send({
+          email: "user@",
+          password: VALID_PASSWORD,
+        });
+
+      expect(res.status).toBe(400);
+    });
   });
 
   describe("password validation - length boundaries", () => {
@@ -310,6 +349,18 @@ describe("POST /register", () => {
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty("message");
+    });
+
+    it("accepts password with underscore as special character", async () => {
+      const res = await request(app)
+        .post("/register")
+        .set("x-inter-service-token", INTER_SERVICE_TOKEN)
+        .send({
+          email: "underscore@example.com",
+          password: "Abcdef1_",
+        });
+
+      expect(res.status).toBe(201);
     });
   });
 
@@ -439,7 +490,7 @@ describe("POST /register", () => {
       expect(res.body).not.toHaveProperty("password");
     });
 
-    it("does not leak passwordHash through serialization (controller returns explicit fields)", async () => {
+    it("response body contains only id and email", async () => {
       const res = await request(app)
         .post("/register")
         .set("x-inter-service-token", INTER_SERVICE_TOKEN)
@@ -451,9 +502,7 @@ describe("POST /register", () => {
       expect(res.status).toBe(201);
 
       const bodyKeys = Object.keys(res.body);
-      expect(bodyKeys).toEqual(
-        expect.arrayContaining(["id", "email"]),
-      );
+      expect(bodyKeys).toEqual(expect.arrayContaining(["id", "email"]));
       expect(bodyKeys).not.toContain("passwordHash");
       expect(bodyKeys).not.toContain("password");
       expect(bodyKeys).not.toContain("_id");

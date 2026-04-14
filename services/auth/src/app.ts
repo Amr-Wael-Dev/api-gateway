@@ -98,6 +98,10 @@ app.use(authRouter);
 app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error(`[Auth - ${new Date().toISOString()}] ${error.stack}`);
 
+  if ((error as NodeJS.ErrnoException & { type?: string }).type === "entity.parse.failed") {
+    return res.status(400).json({ message: "Invalid JSON" });
+  }
+
   if (error.message.includes("ECONNREFUSED")) {
     console.error(`[Auth] Redis is down — status: ${redis.status}`);
     return res.status(503).json({ message: "Service unavailable: redis" });

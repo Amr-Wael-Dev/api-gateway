@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import { config } from "dotenv";
+
 config({ path: ".env.test", override: true });
 
 export default defineConfig({
@@ -13,5 +14,6 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
     },
+    fileParallelism: false,
   },
 });

@@ -98,7 +98,7 @@ export async function refresh(req: Request, res: Response) {
 
   const { refreshToken: oldRefreshToken } = data;
   const oldRefreshTokenName = getRefreshTokenRedisName(oldRefreshToken);
-  const userId = await redis.get(oldRefreshTokenName);
+  const userId = await redis.getdel(oldRefreshTokenName);
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -116,7 +116,6 @@ export async function refresh(req: Request, res: Response) {
     "EX",
     REFRESH_TOKEN_TTL_SECONDS,
   );
-  await redis.del(oldRefreshTokenName);
 
   return res.status(200).json({ refreshToken, accessToken });
 }

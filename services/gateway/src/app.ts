@@ -19,9 +19,9 @@ const app = express();
 const USERS_SERVICE_URL = process.env.USERS_SERVICE_URL!;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
-const ALLOWED_ORIGINS = process.env
-  .ALLOWED_ORIGINS!.split(",")
-  .map((origin) => origin.trim());
+const rawOrigins = process.env.ALLOWED_ORIGINS!.split(",").map((o) => o.trim());
+const ALLOWED_ORIGINS: string | string[] =
+  rawOrigins.length === 1 && rawOrigins[0] === "*" ? "*" : rawOrigins;
 
 const services = [
   { name: "users", url: USERS_SERVICE_URL },
