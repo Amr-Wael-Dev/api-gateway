@@ -10,6 +10,7 @@ ARG SERVICE_PATH
 COPY package.json pnpm-workspace.yaml ./
 COPY ${SERVICE_PATH}/package.json ./${SERVICE_PATH}/
 COPY shared/types/package.json ./shared/types/
+COPY shared/logger/package.json ./shared/logger/
 RUN pnpm install
 COPY . .
 WORKDIR /app/${SERVICE_PATH}
@@ -21,6 +22,7 @@ ARG SERVICE_PATH
 COPY package.json pnpm-workspace.yaml ./
 COPY ${SERVICE_PATH}/package.json ./${SERVICE_PATH}/
 COPY shared/types/package.json ./shared/types/
+COPY shared/logger/package.json ./shared/logger/
 RUN pnpm install --frozen-lockfile
 COPY . .
 WORKDIR /app/${SERVICE_PATH}
