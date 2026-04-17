@@ -15,7 +15,7 @@ describe("POST /register", () => {
       });
 
       expect(res.status).toBe(403);
-      expect(res.body).toEqual({ message: "Forbidden" });
+      expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
     });
 
     it("returns 403 when x-inter-service-token is invalid", async () => {
@@ -28,7 +28,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(403);
-      expect(res.body).toEqual({ message: "Forbidden" });
+      expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
     });
   });
 
@@ -102,7 +102,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password is missing", async () => {
@@ -114,7 +114,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when request body is empty", async () => {
@@ -124,7 +124,7 @@ describe("POST /register", () => {
         .send({});
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
   });
 
@@ -139,7 +139,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is null", async () => {
@@ -152,7 +152,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is a number", async () => {
@@ -165,7 +165,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is an array", async () => {
@@ -178,7 +178,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is an object", async () => {
@@ -191,7 +191,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 for email with leading/trailing whitespace", async () => {
@@ -255,7 +255,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 201 when password is exactly 8 chars (min boundary)", async () => {
@@ -294,7 +294,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
   });
 
@@ -309,7 +309,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password has no lowercase letter", async () => {
@@ -322,7 +322,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password has no digit", async () => {
@@ -335,7 +335,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password has no special character", async () => {
@@ -348,7 +348,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("accepts password with underscore as special character", async () => {
@@ -375,7 +375,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password is a number", async () => {
@@ -388,7 +388,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password is an array", async () => {
@@ -401,7 +401,7 @@ describe("POST /register", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
   });
 
@@ -428,7 +428,7 @@ describe("POST /register", () => {
         });
 
       expect(secondRes.status).toBe(409);
-      expect(secondRes.body).toHaveProperty("message");
+      expect(secondRes.body).toHaveProperty("title");
     });
 
     it("returns 409 for case-insensitive duplicate email", async () => {

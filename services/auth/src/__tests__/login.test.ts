@@ -40,7 +40,7 @@ describe("POST /login", () => {
       });
 
       expect(res.status).toBe(403);
-      expect(res.body).toEqual({ message: "Forbidden" });
+      expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
     });
 
     it("returns 403 when x-inter-service-token is invalid", async () => {
@@ -53,7 +53,7 @@ describe("POST /login", () => {
         });
 
       expect(res.status).toBe(403);
-      expect(res.body).toEqual({ message: "Forbidden" });
+      expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
     });
   });
 
@@ -249,7 +249,7 @@ describe("POST /login", () => {
         .send({});
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is missing", async () => {
@@ -259,7 +259,7 @@ describe("POST /login", () => {
         .send({ password: VALID_PASSWORD });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password is missing", async () => {
@@ -269,7 +269,7 @@ describe("POST /login", () => {
         .send({ email: VALID_EMAIL });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is an empty string", async () => {
@@ -279,7 +279,7 @@ describe("POST /login", () => {
         .send({ email: "", password: VALID_PASSWORD });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password is an empty string", async () => {
@@ -289,7 +289,7 @@ describe("POST /login", () => {
         .send({ email: VALID_EMAIL, password: "" });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
   });
 
@@ -301,7 +301,7 @@ describe("POST /login", () => {
         .send({ email: "not-an-email", password: VALID_PASSWORD });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is null", async () => {
@@ -311,7 +311,7 @@ describe("POST /login", () => {
         .send({ email: null, password: VALID_PASSWORD });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is a number", async () => {
@@ -321,7 +321,7 @@ describe("POST /login", () => {
         .send({ email: 12345, password: VALID_PASSWORD });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is an array", async () => {
@@ -331,7 +331,7 @@ describe("POST /login", () => {
         .send({ email: ["test@example.com"], password: VALID_PASSWORD });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when email is an object", async () => {
@@ -344,7 +344,7 @@ describe("POST /login", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 for email with leading/trailing whitespace", async () => {
@@ -354,7 +354,7 @@ describe("POST /login", () => {
         .send({ email: "  test@example.com  ", password: VALID_PASSWORD });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
   });
 
@@ -366,7 +366,7 @@ describe("POST /login", () => {
         .send({ email: VALID_EMAIL, password: null });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password is a number", async () => {
@@ -376,7 +376,7 @@ describe("POST /login", () => {
         .send({ email: VALID_EMAIL, password: 12345678 });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when password is an array", async () => {
@@ -386,7 +386,7 @@ describe("POST /login", () => {
         .send({ email: VALID_EMAIL, password: ["Test@1234"] });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
   });
 
@@ -400,7 +400,7 @@ describe("POST /login", () => {
         .send({ email: VALID_EMAIL, password: "Wr0ng@Pass" });
 
       expect(res.status).toBe(401);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 401 when email does not exist", async () => {
@@ -410,7 +410,7 @@ describe("POST /login", () => {
         .send({ email: "ghost@example.com", password: VALID_PASSWORD });
 
       expect(res.status).toBe(401);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 401 when both email and password are wrong", async () => {
@@ -420,7 +420,7 @@ describe("POST /login", () => {
         .send({ email: "nobody@example.com", password: "Wr0ng@Pass" });
 
       expect(res.status).toBe(401);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns the same error body for wrong password and non-existent email (prevents user enumeration)", async () => {
@@ -438,7 +438,15 @@ describe("POST /login", () => {
 
       expect(wrongPassword.status).toBe(401);
       expect(noSuchUser.status).toBe(401);
-      expect(wrongPassword.body).toEqual(noSuchUser.body);
+
+      const omitCorrelationId = (body: Record<string, unknown>) => {
+        const { correlationId, ...rest } = body;
+        void correlationId;
+        return rest;
+      };
+      expect(omitCorrelationId(wrongPassword.body)).toEqual(
+        omitCorrelationId(noSuchUser.body),
+      );
     });
   });
 

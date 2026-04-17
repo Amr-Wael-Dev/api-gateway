@@ -1,5 +1,4 @@
-import type { Response, Request } from "express";
-import z from "zod";
+import type { Response, Request, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { MongoServerError } from "mongodb";
@@ -12,27 +11,33 @@ import {
   RefreshRequest,
   LogoutRequest,
 } from "../validators/auth.validators";
+import {
+  ConflictError,
+  UnauthorizedError,
+  ValidationError,
+} from "@shared/errors";
+import { getBlocklistRedisName, getRefreshTokenRedisName } from "@shared/types";
 
 const saltRounds = 10;
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY!;
 const REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
-const getRefreshTokenRedisName = (token: string) =>
-  `auth:refresh-token:${token}`;
-const getBlocklistRedisName = (jti: string) => `auth:blocklist:${jti}`;
-
-export async function register(req: Request, res: Response) {
+export async function register(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   const { success, data, error } = RegisterRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ message: z.treeifyError(error) });
+    return next(new ValidationError(error.message));
   }
 
   const { email, password } = data;
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return res.status(409).json({ message: "Conflict" });
+    return next(new ConflictError());
   }
 
   const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -44,7 +49,7 @@ export async function register(req: Request, res: Response) {
     userEmail = createResponse.email;
   } catch (error: unknown) {
     if (error instanceof MongoServerError && error.code === 11000) {
-      return res.status(409).json({ message: "Conflict" });
+      return next(new ConflictError());
     }
 
     throw error;
@@ -53,28 +58,28 @@ export async function register(req: Request, res: Response) {
   return res.status(201).json({ id, email: userEmail });
 }
 
-export async function login(req: Request, res: Response) {
+export async function login(req: Request, res: Response, next: NextFunction) {
   const { success, data, error } = LoginRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ message: z.treeifyError(error) });
+    return next(new ValidationError(error.message));
   }
 
   const { email, password } = data;
 
   const user = await User.findOne({ email });
   if (!user) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return next(new UnauthorizedError());
   }
 
   if (user.isDeleted) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return next(new UnauthorizedError());
   }
 
   const isPasswordCorrect = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordCorrect) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return next(new UnauthorizedError());
   }
 
   const accessToken = generateAccessToken(user);
@@ -89,23 +94,23 @@ export async function login(req: Request, res: Response) {
   return res.status(200).json({ refreshToken, accessToken });
 }
 
-export async function refresh(req: Request, res: Response) {
+export async function refresh(req: Request, res: Response, next: NextFunction) {
   const { success, data, error } = RefreshRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ message: z.treeifyError(error) });
+    return next(new ValidationError(error.message));
   }
 
   const { refreshToken: oldRefreshToken } = data;
   const oldRefreshTokenName = getRefreshTokenRedisName(oldRefreshToken);
   const userId = await redis.getdel(oldRefreshTokenName);
   if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return next(new UnauthorizedError());
   }
 
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return next(new UnauthorizedError());
   }
 
   const accessToken = generateAccessToken(user);
@@ -120,11 +125,11 @@ export async function refresh(req: Request, res: Response) {
   return res.status(200).json({ refreshToken, accessToken });
 }
 
-export async function logout(req: Request, res: Response) {
+export async function logout(req: Request, res: Response, next: NextFunction) {
   const { success, data, error } = LogoutRequest.safeParse(req.body);
 
   if (!success) {
-    return res.status(400).json({ message: z.treeifyError(error) });
+    return next(new ValidationError(error.message));
   }
 
   const { refreshToken, accessToken } = data;
@@ -135,12 +140,12 @@ export async function logout(req: Request, res: Response) {
       ignoreExpiration: true,
     });
   } catch {
-    return res.status(400).json({ message: "Invalid token" });
+    return next(new ValidationError("Invalid token"));
   }
   const { jti, exp } = decodedpayload as jwt.JwtPayload;
 
   if (!exp || !jti) {
-    return res.status(400).json({ message: "Invalid token" });
+    return next(new ValidationError("Invalid token"));
   }
 
   const remTTL = exp - Math.floor(Date.now() / 1000);

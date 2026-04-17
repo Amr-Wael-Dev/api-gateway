@@ -11,7 +11,7 @@ describe("GET /health", () => {
     const res = await request(app).get("/health");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: "ok" });
+    expect(res.body).toEqual({ name: "health", status: "ok" });
   });
 
   it("does not require authentication", async () => {
@@ -75,7 +75,7 @@ describe("inter-service auth guard", () => {
     });
 
     expect(res.status).toBe(403);
-    expect(res.body).toEqual({ message: "Forbidden" });
+    expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
   });
 
   it("returns 403 for POST /login without inter-service token", async () => {
@@ -85,7 +85,7 @@ describe("inter-service auth guard", () => {
     });
 
     expect(res.status).toBe(403);
-    expect(res.body).toEqual({ message: "Forbidden" });
+    expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
   });
 
   it("returns 403 for POST /refresh without inter-service token", async () => {
@@ -94,7 +94,7 @@ describe("inter-service auth guard", () => {
       .send({ refreshToken: crypto.randomUUID() });
 
     expect(res.status).toBe(403);
-    expect(res.body).toEqual({ message: "Forbidden" });
+    expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
   });
 
   it("returns 403 for POST /logout without inter-service token", async () => {
@@ -103,7 +103,7 @@ describe("inter-service auth guard", () => {
       .send({ accessToken: "some-token", refreshToken: crypto.randomUUID() });
 
     expect(res.status).toBe(403);
-    expect(res.body).toEqual({ message: "Forbidden" });
+    expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
   });
 
   it("returns 403 with invalid inter-service token", async () => {
@@ -113,7 +113,7 @@ describe("inter-service auth guard", () => {
       .send({ email: "bad@example.com", password: VALID_PASSWORD });
 
     expect(res.status).toBe(403);
-    expect(res.body).toEqual({ message: "Forbidden" });
+    expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
   });
 
   it("returns 403 with empty inter-service token", async () => {

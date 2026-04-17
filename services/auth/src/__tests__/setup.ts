@@ -16,10 +16,7 @@ afterEach(async () => {
     await collections[key].deleteMany({});
   }
 
-  const keys = await redis.keys("auth:*");
-  if (keys.length > 0) {
-    await redis.del(keys);
-  }
+  await redis.flushdb();
 });
 
 afterAll(async () => {

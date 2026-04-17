@@ -208,7 +208,7 @@ describe("POST /logout", () => {
         .send({});
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when accessToken is missing", async () => {
@@ -218,7 +218,7 @@ describe("POST /logout", () => {
         .send({ refreshToken: crypto.randomUUID() });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when refreshToken is missing", async () => {
@@ -232,7 +232,7 @@ describe("POST /logout", () => {
         .send({ accessToken });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when refreshToken is not a valid UUID", async () => {
@@ -278,7 +278,7 @@ describe("POST /logout", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when accessToken is signed with a wrong key", async () => {
@@ -318,7 +318,7 @@ describe("POST /logout", () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when access token has no exp claim", async () => {

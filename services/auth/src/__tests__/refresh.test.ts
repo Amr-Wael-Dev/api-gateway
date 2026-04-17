@@ -43,7 +43,7 @@ describe("POST /refresh", () => {
         .send({ refreshToken: crypto.randomUUID() });
 
       expect(res.status).toBe(403);
-      expect(res.body).toEqual({ message: "Forbidden" });
+      expect(res.body).toMatchObject({ type: expect.any(String), status: 403 });
     });
 
     it("returns 403 with invalid inter-service token", async () => {
@@ -189,7 +189,7 @@ describe("POST /refresh", () => {
         .send({});
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when refreshToken is not a valid UUID", async () => {
@@ -199,7 +199,7 @@ describe("POST /refresh", () => {
         .send({ refreshToken: "not-a-uuid" });
 
       expect(res.status).toBe(400);
-      expect(res.body).toHaveProperty("message");
+      expect(res.body).toHaveProperty("title");
     });
 
     it("returns 400 when refreshToken is a number", async () => {

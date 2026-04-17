@@ -1,9 +1,18 @@
 import { defineConfig } from "vitest/config";
 import { config } from "dotenv";
+import path from "path";
 
 config({ path: ".env.test", override: true });
 
 export default defineConfig({
+  resolve: {
+    alias: [
+      {
+        find: /^@shared\/(.*)$/,
+        replacement: path.join(__dirname, "../../shared/$1/src/index.ts"),
+      },
+    ],
+  },
   test: {
     globals: true,
     environment: "node",
