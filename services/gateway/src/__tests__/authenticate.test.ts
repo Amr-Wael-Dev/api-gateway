@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import nodeCrypto from "node:crypto";
 import redis from "../lib/redis";
+import { UnauthorizedError, ForbiddenError } from "@shared/errors";
 
 const { mockGetSigningKey } = vi.hoisted(() => ({
   mockGetSigningKey: vi.fn(),
@@ -72,8 +73,7 @@ function createMocks(headers: Record<string, string> = {}) {
 }
 
 describe("authenticateToken middleware", () => {
-  beforeEach(async () => {
-    await redis.flushdb();
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
@@ -119,9 +119,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized" });
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it("returns 401 when Authorization header is empty string", async () => {
@@ -129,8 +128,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it("returns 401 when Authorization scheme is not Bearer", async () => {
@@ -140,8 +139,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it("returns 401 when Bearer token is empty string", async () => {
@@ -149,8 +148,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it("returns 401 for a malformed token (not valid JWT format)", async () => {
@@ -160,8 +159,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it("returns 401 for a token with invalid base64 characters", async () => {
@@ -171,8 +170,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 
@@ -192,8 +191,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 
@@ -219,8 +218,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it("returns 401 for a token signed with a different key", async () => {
@@ -243,8 +242,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 
@@ -261,9 +260,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(403);
-      expect(res.json).toHaveBeenCalledWith({ message: "Forbidden" });
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(ForbiddenError));
+      expect(res.status).not.toHaveBeenCalled();
     });
 
     it("passes through when jti is not in the blocklist", async () => {
@@ -306,8 +304,8 @@ describe("authenticateToken middleware", () => {
 
       await authenticateToken(req, res, next);
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(next).not.toHaveBeenCalled();
+      expect(next).toHaveBeenCalledWith(expect.any(UnauthorizedError));
+      expect(res.status).not.toHaveBeenCalled();
     });
   });
 });

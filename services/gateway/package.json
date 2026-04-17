@@ -11,10 +11,15 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@shared/types": "workspace:*",
+    "@shared/logger": "workspace:*",
+    "@shared/errors": "workspace:*",
+    "@shared/middleware": "workspace:*",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
     "http-proxy-middleware": "^3.0.5",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",

@@ -1,12 +1,4 @@
-interface Service {
-  name: string;
-  url: string;
-}
-
-interface ServiceCheckResult {
-  name: string;
-  status: "ok" | "error" | "unreachable";
-}
+import { Service, ServiceCheckResult } from "@shared/types";
 
 export async function probeServices(
   services: Service[],
@@ -22,7 +14,7 @@ export async function probeServices(
         const body = await response.json();
         return { name, status: response.ok ? "ok" : "error", ...body };
       } catch {
-        return { name, status: "unreachable" };
+        return { name, status: "error" };
       }
     }),
   );

@@ -13,6 +13,14 @@ import swaggerUi from "swagger-ui-express";
 import redis from "./lib/redis";
 import { authenticateToken } from "./middleware/authenticate";
 import { probeServices } from "./lib/serviceProbes";
+import {
+  correlationId,
+  requestLogger,
+  helmetMiddleware,
+  errorHandler,
+} from "@shared/middleware";
+import { createLogger } from "@shared/logger";
+import { Service, ServiceCheckResult } from "@shared/types";
 
 const app = express();
 
@@ -23,11 +31,12 @@ const rawOrigins = process.env.ALLOWED_ORIGINS!.split(",").map((o) => o.trim());
 const ALLOWED_ORIGINS: string | string[] =
   rawOrigins.length === 1 && rawOrigins[0] === "*" ? "*" : rawOrigins;
 
-const services = [
+const services: Service[] = [
   { name: "users", url: USERS_SERVICE_URL },
   { name: "auth", url: AUTH_SERVICE_URL },
 ];
 
+const logger = createLogger("gateway");
 const limiter = (limit: number, store: Store, options: Partial<Options> = {}) =>
   rateLimit({
     windowMs: 1 * 60 * 1000,
@@ -45,6 +54,9 @@ const redisStore = (prefix: string) =>
   });
 
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
+app.use(helmetMiddleware);
+app.use(correlationId);
+app.use(requestLogger(logger));
 
 app.use(
   "/docs/auth",
@@ -53,6 +65,14 @@ app.use(
     changeOrigin: true,
     pathRewrite: { "^/docs/auth": "" },
     headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+    on: {
+      proxyReq: (proxyReq, req) => {
+        proxyReq.setHeader(
+          "x-correlation-id",
+          req.headers["x-correlation-id"] ?? "",
+        );
+      },
+    },
   }),
 );
 app.use(
@@ -68,7 +88,7 @@ app.use(
 app.use(
   "/users",
   authenticateToken,
-  limiter(1000, redisStore("users:rate-limit:"), {
+  limiter(1000, redisStore("gateway:rate-limit:users:"), {
     keyGenerator: (req) =>
       `${ipKeyGenerator(req.ip ?? "")}-${req.headers["x-user-id"]}`,
   }),
@@ -76,29 +96,55 @@ app.use(
     target: USERS_SERVICE_URL,
     changeOrigin: true,
     headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+    on: {
+      proxyReq: (proxyReq, req) => {
+        proxyReq.setHeader(
+          "x-correlation-id",
+          req.headers["x-correlation-id"] ?? "",
+        );
+      },
+    },
   }),
 );
 
 app.use(
   "/auth",
-  limiter(200, redisStore("auth:rate-limit:")),
+  limiter(200, redisStore("gateway:rate-limit:auth:")),
   createProxyMiddleware({
     target: AUTH_SERVICE_URL,
     changeOrigin: true,
     headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+    on: {
+      proxyReq: (proxyReq, req) => {
+        proxyReq.setHeader(
+          "x-correlation-id",
+          req.headers["x-correlation-id"] ?? "",
+        );
+      },
+    },
   }),
 );
 
 app.get("/health", limiter(60, new MemoryStore()), async (_req, res) => {
-  const checks = await probeServices(services, "health", INTER_SERVICE_TOKEN);
+  const checks: ServiceCheckResult[] = await probeServices(
+    services,
+    "health",
+    INTER_SERVICE_TOKEN,
+  );
   const allOk = checks.every((c) => c.status === "ok");
   res.status(allOk ? 200 : 503).json(checks);
 });
 
 app.get("/ready", limiter(60, new MemoryStore()), async (_req, res) => {
-  const checks = await probeServices(services, "ready", INTER_SERVICE_TOKEN);
+  const checks: ServiceCheckResult[] = await probeServices(
+    services,
+    "ready",
+    INTER_SERVICE_TOKEN,
+  );
   const allOk = checks.every((c) => c.status === "ok");
   res.status(allOk ? 200 : 503).json(checks);
 });
+
+app.use(errorHandler(logger));
 
 export default app;

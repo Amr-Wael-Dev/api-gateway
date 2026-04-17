@@ -2,6 +2,8 @@ import type { Request, Response, NextFunction } from "express";
 import JwksRsa from "jwks-rsa";
 import jwt from "jsonwebtoken";
 import redis from "../lib/redis";
+import { ForbiddenError, UnauthorizedError } from "@shared/errors";
+import { getBlocklistRedisName } from "@shared/types";
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 
@@ -12,18 +14,16 @@ async function getKey(kid: string) {
   return key.getPublicKey();
 }
 
-const getBlocklistRedisName = (jti: string) => `auth:blocklist:${jti}`;
-
 export async function authenticateToken(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return next(new UnauthorizedError());
   }
 
   try {
@@ -31,7 +31,7 @@ export async function authenticateToken(
     const { kid } = header;
 
     if (!kid) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return next(new UnauthorizedError());
     }
 
     const key = await getKey(kid);
@@ -47,8 +47,8 @@ export async function authenticateToken(
       return next();
     }
 
-    return res.status(403).json({ message: "Forbidden" });
+    return next(new ForbiddenError());
   } catch {
-    return res.status(401).json({ message: "Unauthorized" });
+    return next(new UnauthorizedError());
   }
 }

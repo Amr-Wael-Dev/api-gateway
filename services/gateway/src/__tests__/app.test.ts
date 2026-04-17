@@ -48,7 +48,7 @@ describe("GET /health", () => {
   it("returns 503 when one service is unreachable", async () => {
     mockedProbeServices.mockResolvedValue([
       { name: "auth", status: "ok" },
-      { name: "users", status: "unreachable" },
+      { name: "users", status: "error" },
     ]);
 
     const res = await request(app).get("/health");
@@ -58,8 +58,8 @@ describe("GET /health", () => {
 
   it("returns 503 when all services are unreachable", async () => {
     mockedProbeServices.mockResolvedValue([
-      { name: "auth", status: "unreachable" },
-      { name: "users", status: "unreachable" },
+      { name: "auth", status: "error" },
+      { name: "users", status: "error" },
     ]);
 
     const res = await request(app).get("/health");
@@ -70,7 +70,7 @@ describe("GET /health", () => {
   it("includes service names and statuses from upstream probes", async () => {
     mockedProbeServices.mockResolvedValue([
       { name: "auth", status: "ok" },
-      { name: "users", status: "unreachable" },
+      { name: "users", status: "error" },
     ]);
 
     const res = await request(app).get("/health");
@@ -78,7 +78,7 @@ describe("GET /health", () => {
     expect(res.body).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "auth", status: "ok" }),
-        expect.objectContaining({ name: "users", status: "unreachable" }),
+        expect.objectContaining({ name: "users", status: "error" }),
       ]),
     );
   });
