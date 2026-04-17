@@ -1,5 +1,6 @@
 import { type Response, type Request, type NextFunction } from "express";
 import z from "zod";
+import helmet from "helmet";
 import { type ServiceLogger } from "@shared/logger";
 import {
   AppError,
@@ -80,3 +81,33 @@ export const createInterServiceAuth =
     }
     next();
   };
+
+const isProduction = process.env.NODE_ENV === "production";
+const isDevelopment = process.env.NODE_ENV === "development";
+export const helmetMiddleware = helmet({
+  // CSP is only enforced in production — requires tuning when you know your
+  // frontend's asset sources (CDN, fonts, analytics, etc.)
+  contentSecurityPolicy: isProduction
+    ? {
+        directives: {
+          defaultSrc: ["'self'"], // Fallback: only allow same origin
+          scriptSrc: ["'self'"], // Scripts: same origin only; extend when you add a CDN
+          styleSrc: ["'self'", "https:", "'unsafe-inline'"], // Styles: same origin + any HTTPS + inline (needed by most CSS-in-JS)
+          imgSrc: ["'self'", "data:"], // Images: same origin + inline base64 data URIs
+          fontSrc: ["'self'", "https:", "data:"], // Fonts: same origin + any HTTPS (e.g. Google Fonts) + base64
+          objectSrc: ["'none'"], // Block <object>/<embed>/<applet> entirely (Flash-era attack vector)
+          frameAncestors: ["'self'"], // Only allow framing by same origin (clickjacking defense)
+          upgradeInsecureRequests: [], // Tell browsers to rewrite http:// sub-requests to https://
+        },
+      }
+    : false, // Disabled outside production — avoids CSP noise during development
+
+  // HSTS: tell browsers to use HTTPS-only for 2 years (63072000s), across all subdomains
+  // Disabled in development to avoid browsers forcing https://localhost
+  strictTransportSecurity: !isDevelopment
+    ? { maxAge: 63072000, includeSubDomains: true }
+    : false,
+
+  // Not needed unless you use SharedArrayBuffer or precise memory APIs — leave off
+  crossOriginEmbedderPolicy: false,
+});

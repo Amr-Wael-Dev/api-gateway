@@ -14,6 +14,11 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
+export interface Service {
+  name: string;
+  url: string;
+}
+
 export interface ServiceCheckResult {
   name: string;
   status: "ok" | "error";

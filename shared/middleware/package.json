@@ -16,6 +16,7 @@
     "@shared/errors": "workspace:*",
     "@shared/logger": "workspace:*",
     "express": "^5.2.1",
+    "helmet": "^8.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
