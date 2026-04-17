@@ -10,7 +10,7 @@ services:
     environment:
       - NODE_ENV=development
       - MONGO_URI=mongodb://admin:password@mongo:27017/auth-db?authSource=admin
-      - REDIS_URL=redis://redis:6379/2
+      - REDIS_URL=redis://redis:6379
     env_file:
       - .env
     depends_on:

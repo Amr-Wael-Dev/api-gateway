@@ -1,11 +1,9 @@
 import mongoose from "mongoose";
-import app from "./app";
-import { createLogger } from "@shared/logger";
+import app, { logger } from "./app";
+import queue from "./lib/queue";
 
 const PORT = process.env.PORT!;
 const MONGO_URI = process.env.MONGO_URI!;
-
-const logger = createLogger("auth-service");
 
 mongoose
   .connect(MONGO_URI)
@@ -17,3 +15,9 @@ mongoose
     logger.error("Auth MongoDB connection failed:", err);
     process.exit(1);
   });
+
+process.on("SIGTERM", async () => {
+  await queue.close();
+  await mongoose.disconnect();
+  process.exit(0);
+});

@@ -16,11 +16,19 @@ import {
   UnauthorizedError,
   ValidationError,
 } from "@shared/errors";
-import { getBlocklistRedisName, getRefreshTokenRedisName } from "@shared/types";
+import {
+  BaseJobData,
+  getBlocklistRedisName,
+  getRefreshTokenRedisName,
+  Q_AUTH_USER_REGISTERED,
+  UserRegisteredPayload,
+} from "@shared/types";
+import queue from "../lib/queue";
 
 const saltRounds = 10;
 const JWT_PUBLIC_KEY = process.env.JWT_PUBLIC_KEY!;
 const REFRESH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
+const CORRELATION_ID_HEADER_NAME = "x-correlation-id";
 
 export async function register(
   req: Request,
@@ -55,7 +63,19 @@ export async function register(
     throw error;
   }
 
-  return res.status(201).json({ id, email: userEmail });
+  const payload: UserRegisteredPayload = { id, email: userEmail };
+  const job: BaseJobData<UserRegisteredPayload> = {
+    payload,
+    timestamp: new Date(),
+    correlationId: res.locals[CORRELATION_ID_HEADER_NAME],
+  };
+  await queue.add(Q_AUTH_USER_REGISTERED, job, {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 2000 },
+    removeOnComplete: 100,
+    removeOnFail: 500,
+  });
+  return res.status(201).json(payload);
 }
 
 export async function login(req: Request, res: Response, next: NextFunction) {

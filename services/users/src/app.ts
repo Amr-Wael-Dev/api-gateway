@@ -12,7 +12,7 @@ import {
 import { createLogger } from "@shared/logger";
 import { ServiceCheckResult } from "@shared/types";
 
-const logger = createLogger("users-service");
+export const logger = createLogger("users-service");
 
 const app = express();
 app.use(express.json());

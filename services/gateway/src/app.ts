@@ -36,7 +36,7 @@ const services: Service[] = [
   { name: "auth", url: AUTH_SERVICE_URL },
 ];
 
-const logger = createLogger("gateway");
+export const logger = createLogger("gateway");
 const limiter = (limit: number, store: Store, options: Partial<Options> = {}) =>
   rateLimit({
     windowMs: 1 * 60 * 1000,

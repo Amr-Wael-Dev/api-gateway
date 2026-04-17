@@ -18,7 +18,7 @@ import {
 import { createLogger } from "@shared/logger";
 import { ServiceCheckResult } from "@shared/types";
 
-const logger = createLogger("auth-service");
+export const logger = createLogger("auth-service");
 const limiter = (limit: number, store: Store) =>
   rateLimit({
     windowMs: 1 * 60 * 1000,
