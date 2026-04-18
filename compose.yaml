@@ -21,10 +21,11 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis:/data/redis
+      - redis_data:/data/redis
     networks:
       - backend
 
+  # docker run -d --name gateway_prometheus -p 9090:9090 -v $(pwd)/prometheus.local.yml:/etc/prometheus/prometheus.yml prom/prometheus:v3.5.0
   prometheus:
     image: prom/prometheus:v3.5.0
     volumes:
@@ -35,6 +36,8 @@ services:
     restart: unless-stopped
     networks:
       - backend
+
+  # docker run -d --name gateway_node-exporter -p 9100:9100 --pid="host" -v "/:/host:ro" quay.io/prometheus/node-exporter:v1.9.0 --path.rootfs=/host
   node-exporter:
     image: prom/node-exporter:v1.9.0
     command:
@@ -43,6 +46,21 @@ services:
       - "/:/host:ro"
     pid: host
     restart: unless-stopped
+    networks:
+      - backend
+
+  # docker run -d --name gateway_grafana -p 7000:3000 -v $(pwd)/infra/grafana/provisioning-local:/etc/grafana/provisioning -e GF_SECURITY_ADMIN_PASSWORD=admin grafana/grafana
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "7000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
     networks:
       - backend
   #
@@ -59,8 +77,9 @@ services:
 
 volumes:
   mongo_data:
-  redis:
+  redis_data:
   prometheus_data:
+  grafana_data:
     # pgdata:
 
 networks:
