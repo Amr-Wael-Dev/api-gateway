@@ -62,10 +62,11 @@ export const requestLogger =
   (logger: ServiceLogger) =>
   (req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
+    const path = req.originalUrl;
     res.on("finish", () => {
       const duration = Date.now() - start;
       const level = res.statusCode >= 500 ? "warn" : "info";
-      logger[level](`${req.method} ${req.path}`, {
+      logger[level](`${req.method} ${path}`, {
         status: res.statusCode,
         duration,
         correlationId: res.locals[CORRELATION_ID_HEADER_NAME],
