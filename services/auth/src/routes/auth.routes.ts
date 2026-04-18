@@ -33,8 +33,16 @@ const router = Router();
  *         description: User created
  *       400:
  *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProblemDetail'
  *       409:
  *         description: User already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProblemDetail'
  */
 router.post("/register", register);
 
@@ -72,6 +80,10 @@ router.post("/register", register);
  *                   type: string
  *       401:
  *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProblemDetail'
  */
 router.post("/login", login);
 
@@ -105,6 +117,10 @@ router.post("/login", login);
  *                   type: string
  *       401:
  *         description: Invalid refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProblemDetail'
  */
 router.post("/refresh", refresh);
 
@@ -131,6 +147,10 @@ router.post("/refresh", refresh);
  *         description: Successfully logged out
  *       400:
  *         description: Invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ProblemDetail'
  */
 router.post("/logout", logout);
 

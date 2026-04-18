@@ -3,11 +3,9 @@ import express from "express";
 import mongoose from "mongoose";
 import rateLimit, { MemoryStore, type Store } from "express-rate-limit";
 import { RedisStore, type RedisReply } from "rate-limit-redis";
-import swaggerUi from "swagger-ui-express";
 import redis from "./lib/redis";
 import authRouter from "./routes/auth.routes";
 import { jwks } from "./controllers/auth.controller";
-import { swaggerSpec } from "./swagger";
 import {
   correlationId,
   errorHandler,
@@ -40,9 +38,6 @@ app.use(express.json());
 app.use(helmetMiddleware);
 app.use(correlationId);
 app.use(requestLogger(logger));
-
-app.use("/docs.json", (_req, res) => res.json(swaggerSpec));
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /**
  * @openapi
