@@ -20,6 +20,8 @@ import {
 } from "@shared/middleware";
 import { createLogger } from "@shared/logger";
 import { Service, ServiceCheckResult } from "@shared/types";
+import { register } from "./lib/metrics";
+import { metricsMiddleware } from "./middleware/metricsMiddleware";
 
 const app = express();
 
@@ -43,6 +45,7 @@ const limiter = (limit: number, store: Store, options: Partial<Options> = {}) =>
     standardHeaders: "draft-8",
     legacyHeaders: false,
     store,
+    skip: (req) => req.path === "/metrics",
     ...options,
   });
 const redisStore = (prefix: string) =>
@@ -56,6 +59,7 @@ app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(helmetMiddleware);
 app.use(correlationId);
 app.use(requestLogger(logger));
+app.use(metricsMiddleware);
 
 app.use(
   "/users",
@@ -115,6 +119,11 @@ app.get("/ready", limiter(60, new MemoryStore()), async (_req, res) => {
   );
   const allOk = checks.every((c) => c.status === "ok");
   res.status(allOk ? 200 : 503).json(checks);
+});
+
+app.get("/metrics", async (_req, res) => {
+  res.setHeader("Content-type", register.contentType);
+  return res.status(200).send(await register.metrics());
 });
 
 app.use(errorHandler(logger));

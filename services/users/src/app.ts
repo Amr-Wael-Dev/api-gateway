@@ -11,6 +11,8 @@ import {
 } from "@shared/middleware";
 import { createLogger } from "@shared/logger";
 import { ServiceCheckResult } from "@shared/types";
+import { metricsMiddleware } from "./middleware/metricsMiddleware";
+import { register } from "./lib/metrics";
 
 export const logger = createLogger("users-service");
 
@@ -20,6 +22,8 @@ app.use(express.json());
 app.use(helmetMiddleware);
 app.use(correlationId);
 app.use(requestLogger(logger));
+app.use(metricsMiddleware);
+
 /**
  * @openapi
  * /health:
@@ -68,6 +72,25 @@ app.get("/ready", async (_req, res) => {
 });
 
 app.use(createInterServiceAuth(process.env.INTER_SERVICE_TOKEN!));
+
+/**
+ * @openapi
+ * /metrics:
+ *   get:
+ *     summary: Prometheus metrics
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Prometheus text format metrics
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ */
+app.get("/metrics", async (_req, res) => {
+  res.setHeader("Content-type", register.contentType);
+  return res.status(200).send(await register.metrics());
+});
 
 app.use(errorHandler(logger));
 

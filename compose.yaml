@@ -25,6 +25,27 @@ services:
     networks:
       - backend
 
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    networks:
+      - backend
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - "/:/host:ro"
+    pid: host
+    restart: unless-stopped
+    networks:
+      - backend
+  #
   # postgres:
   #   image: postgres:18
   #   environment:
@@ -39,7 +60,8 @@ services:
 volumes:
   mongo_data:
   redis:
-  # pgdata:
+  prometheus_data:
+    # pgdata:
 
 networks:
   backend:

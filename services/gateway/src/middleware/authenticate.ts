@@ -19,6 +19,10 @@ export async function authenticateToken(
   _res: Response,
   next: NextFunction,
 ) {
+  if (req.path === "/metrics") {
+    return next();
+  }
+
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
