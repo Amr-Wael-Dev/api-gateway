@@ -1,4 +1,9 @@
-import { BaseJobData, UserRegisteredPayload } from "@shared/types";
+import {
+  BaseJobData,
+  Q_AUTH_USER_REGISTERED,
+  UserRegisteredPayload,
+  UserRole,
+} from "@shared/types";
 import { Job, Queue, Worker } from "bullmq";
 import Redis from "ioredis";
 import { logger } from "../app";
@@ -7,6 +12,7 @@ import {
   bullmqJobsFailed,
   bullmqQueueDepth,
 } from "../lib/metrics";
+import User from "../models/User";
 
 export default function createUserRegisteredWorker() {
   const connection = new Redis(process.env.REDIS_URL!, {
@@ -18,8 +24,18 @@ export default function createUserRegisteredWorker() {
   const userRegisteredWorker = new Worker(
     "auth",
     async (job: Job<BaseJobData<UserRegisteredPayload>>) => {
-      logger.info("userRegistered job received", {
-        ...job.data.payload,
+      if (job.name !== Q_AUTH_USER_REGISTERED) return;
+
+      const { id, email } = job.data.payload;
+      await User.findOneAndUpdate(
+        { userId: id },
+        { $setOnInsert: { userId: id, role: UserRole.USER } },
+        { upsert: true },
+      );
+
+      logger.info("user profile created", {
+        userId: id,
+        email,
         correlationId: job.data.correlationId,
       });
     },

@@ -13,6 +13,7 @@ import { createLogger } from "@shared/logger";
 import { ServiceCheckResult } from "@shared/types";
 import { metricsMiddleware } from "./middleware/metricsMiddleware";
 import { register } from "./lib/metrics";
+import usersRouter from "./routes/users.routes";
 
 export const logger = createLogger("users-service");
 
@@ -91,6 +92,8 @@ app.get("/metrics", async (_req, res) => {
   res.setHeader("Content-type", register.contentType);
   return res.status(200).send(await register.metrics());
 });
+
+app.use(usersRouter);
 
 app.use(errorHandler(logger));
 
