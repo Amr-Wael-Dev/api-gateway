@@ -22,6 +22,7 @@ import { createLogger } from "@shared/logger";
 import { Service, ServiceCheckResult } from "@shared/types";
 import { register } from "./lib/metrics";
 import { metricsMiddleware } from "./middleware/metricsMiddleware";
+import { createCircuitBreaker } from "./lib/circuitBreaker";
 
 const app = express();
 
@@ -68,37 +69,43 @@ app.use(
     keyGenerator: (req) =>
       `${ipKeyGenerator(req.ip ?? "")}-${req.headers["x-user-id"]}`,
   }),
-  createProxyMiddleware({
-    target: USERS_SERVICE_URL,
-    changeOrigin: true,
-    headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
-    on: {
-      proxyReq: (proxyReq, req) => {
-        proxyReq.setHeader(
-          "x-correlation-id",
-          req.headers["x-correlation-id"] ?? "",
-        );
+  createCircuitBreaker(
+    "users",
+    createProxyMiddleware({
+      target: USERS_SERVICE_URL,
+      changeOrigin: true,
+      headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+      on: {
+        proxyReq: (proxyReq, req) => {
+          proxyReq.setHeader(
+            "x-correlation-id",
+            req.headers["x-correlation-id"] ?? "",
+          );
+        },
       },
-    },
-  }),
+    }),
+  ),
 );
 
 app.use(
   "/auth",
   limiter(200, redisStore("gateway:rate-limit:auth:")),
-  createProxyMiddleware({
-    target: AUTH_SERVICE_URL,
-    changeOrigin: true,
-    headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
-    on: {
-      proxyReq: (proxyReq, req) => {
-        proxyReq.setHeader(
-          "x-correlation-id",
-          req.headers["x-correlation-id"] ?? "",
-        );
+  createCircuitBreaker(
+    "auth",
+    createProxyMiddleware({
+      target: AUTH_SERVICE_URL,
+      changeOrigin: true,
+      headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+      on: {
+        proxyReq: (proxyReq, req) => {
+          proxyReq.setHeader(
+            "x-correlation-id",
+            req.headers["x-correlation-id"] ?? "",
+          );
+        },
       },
-    },
-  }),
+    }),
+  ),
 );
 
 app.get("/health", limiter(60, new MemoryStore()), async (_req, res) => {

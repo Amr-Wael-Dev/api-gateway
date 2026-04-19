@@ -20,3 +20,10 @@ export const httpRequestDuration = new client.Histogram({
   labelNames: ["method", "route", "status"],
   registers: [register],
 });
+
+export const circuitBreakerState = new client.Gauge({
+  name: "circuit_breaker_state",
+  help: "Circuit Breaker State",
+  labelNames: ["service"],
+  registers: [register],
+});

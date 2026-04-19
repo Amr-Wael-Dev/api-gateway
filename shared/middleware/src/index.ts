@@ -24,7 +24,6 @@ export function correlationId(req: Request, res: Response, next: NextFunction) {
 
 export const errorHandler =
   (logger: ServiceLogger) =>
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   (error: Error, _req: Request, res: Response, _next: NextFunction) => {
     const correlationIdHeader = res.locals[CORRELATION_ID_HEADER_NAME];
     if (error instanceof AppError) {
