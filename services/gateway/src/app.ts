@@ -23,6 +23,7 @@ import { Service, ServiceCheckResult } from "@shared/types";
 import { register } from "./lib/metrics";
 import { metricsMiddleware } from "./middleware/metricsMiddleware";
 import { createCircuitBreaker } from "./lib/circuitBreaker";
+import swaggerUi from "swagger-ui-express";
 
 const app = express();
 
@@ -61,6 +62,31 @@ app.use(helmetMiddleware);
 app.use(correlationId);
 app.use(requestLogger(logger));
 app.use(metricsMiddleware);
+
+app.use("/docs", swaggerUi.serve);
+app.get(
+  "/docs",
+  swaggerUi.setup(undefined, {
+    explorer: true,
+    swaggerOptions: {
+      urls: [
+        { name: "Auth Service", url: "/auth/docs/json" },
+        { name: "Users Service", url: "/users/docs/json" },
+      ],
+    },
+  }),
+);
+// Skip the `authenticateToken` middleware
+app.use(
+  "/users/docs",
+  createProxyMiddleware({
+    target: USERS_SERVICE_URL,
+    changeOrigin: true,
+    headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+    // Express strips "/users/docs" from req.url, so rewrite "/" back to "/docs/"
+    pathRewrite: { "^/": "/docs/" },
+  }),
+);
 
 app.use(
   "/users",

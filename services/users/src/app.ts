@@ -14,6 +14,8 @@ import { ServiceCheckResult } from "@shared/types";
 import { metricsMiddleware } from "./middleware/metricsMiddleware";
 import { register } from "./lib/metrics";
 import usersRouter from "./routes/users.routes";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./lib/swagger";
 
 export const logger = createLogger("users-service");
 
@@ -71,6 +73,10 @@ app.get("/ready", async (_req, res) => {
   const allOk = checks.every((c) => c.status === "ok");
   res.status(allOk ? 200 : 503).json(checks);
 });
+
+app.use("/docs", swaggerUi.serve);
+app.get("/docs", swaggerUi.setup(swaggerSpec));
+app.get("/docs/json", (_req, res) => res.json(swaggerSpec));
 
 app.use(createInterServiceAuth(process.env.INTER_SERVICE_TOKEN!));
 
