@@ -27,6 +27,7 @@ import swaggerUi from "swagger-ui-express";
 
 const app = express();
 
+const API_VERSION = "v1";
 const USERS_SERVICE_URL = process.env.USERS_SERVICE_URL!;
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 const INTER_SERVICE_TOKEN = process.env.INTER_SERVICE_TOKEN!;
@@ -70,15 +71,25 @@ app.get(
     explorer: true,
     swaggerOptions: {
       urls: [
-        { name: "Auth Service", url: "/auth/docs/json" },
-        { name: "Users Service", url: "/users/docs/json" },
+        { name: "Auth Service", url: `/${API_VERSION}/auth/docs/json` },
+        { name: "Users Service", url: `/${API_VERSION}/users/docs/json` },
       ],
     },
   }),
 );
 // Skip the `authenticateToken` middleware
 app.use(
-  "/users/docs",
+  `/${API_VERSION}/users/metrics`,
+  createProxyMiddleware({
+    target: USERS_SERVICE_URL,
+    changeOrigin: true,
+    headers: { "x-inter-service-token": INTER_SERVICE_TOKEN },
+    pathRewrite: { "^/": "/metrics" },
+  }),
+);
+
+app.use(
+  `/${API_VERSION}/users/docs`,
   createProxyMiddleware({
     target: USERS_SERVICE_URL,
     changeOrigin: true,
@@ -89,7 +100,7 @@ app.use(
 );
 
 app.use(
-  "/users",
+  `/${API_VERSION}/users`,
   authenticateToken,
   limiter(1000, redisStore("gateway:rate-limit:users:"), {
     keyGenerator: (req) =>
@@ -114,7 +125,7 @@ app.use(
 );
 
 app.use(
-  "/auth",
+  `/${API_VERSION}/auth`,
   limiter(200, redisStore("gateway:rate-limit:auth:")),
   createCircuitBreaker(
     "auth",

@@ -22,6 +22,7 @@ export interface Service {
 export interface ServiceCheckResult {
   name: string;
   status: "ok" | "error";
+  checks?: ServiceCheckResult[];
 }
 
 export type HealthCheckResult = ServiceCheckResult[];

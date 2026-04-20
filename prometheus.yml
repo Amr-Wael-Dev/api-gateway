@@ -10,10 +10,10 @@ scrape_configs:
     static_configs:
       - targets: ["gateway:3000"]
   - job_name: "auth-service"
-    metrics_path: "/auth/metrics"
+    metrics_path: "/v1/auth/metrics"
     static_configs:
       - targets: ["gateway:3000"]
   - job_name: "users-service"
-    metrics_path: "/users/metrics"
+    metrics_path: "/v1/users/metrics"
     static_configs:
       - targets: ["gateway:3000"]

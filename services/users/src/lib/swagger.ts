@@ -29,7 +29,10 @@ export const swaggerSpec = swaggerJsdoc({
             displayName: { type: "string" },
             bio: { type: "string" },
             avatarUrl: { type: "string" },
-            role: { type: "string", enum: ["guest", "user", "moderator", "admin"] },
+            role: {
+              type: "string",
+              enum: ["guest", "user", "moderator", "admin"],
+            },
             isDeleted: { type: "boolean" },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },

@@ -12,7 +12,11 @@ export async function probeServices(
           headers: { "x-inter-service-token": interServiceToken },
         });
         const body = await response.json();
-        return { name, status: response.ok ? "ok" : "error", ...body };
+        const status = response.ok ? "ok" : "error";
+        if (Array.isArray(body)) {
+          return { name, status, checks: body };
+        }
+        return { name, status };
       } catch {
         return { name, status: "error" };
       }
