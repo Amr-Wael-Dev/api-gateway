@@ -6,12 +6,13 @@ This is a production-grade distributed backend system built with Node.js/TypeScr
 
 A microservices platform demonstrating distributed systems patterns including:
 
-- Custom API Gateway with rate limiting, circuit breaker, JWT verification
-- Auth Service with OAuth2, JWT tokens, and RBAC
-- User Service for profile management
+- Custom API Gateway with rate limiting, circuit breaker, JWT verification, Swagger aggregation
+- Auth Service with RS256 JWT tokens, Redis refresh token store + blocklist, RBAC
+- User Service for profile management with BullMQ-driven profile creation
 - Event-driven architecture using BullMQ (Redis-based job queues)
-- MongoDB per service, Redis for caching/rate-limiting/queues
-- Docker Compose for local development, Kubernetes for production
+- MongoDB per service, Redis for caching/rate-limiting/queues/BullMQ
+- Prometheus + Grafana observability stack
+- Docker Compose for local development, Kubernetes (future)
 
 ## Architecture
 
@@ -121,21 +122,63 @@ Structured JSON logging via shared logger package. Include correlationId, servic
 
 ## Current Implementation Status
 
-- ✅ Gateway: Basic routing, health checks, inter-service auth
-- ✅ Auth: Basic health checks, DB/Redis connections
-- ✅ Users: Basic health checks, DB/Redis connections
-- 🚧 BullMQ integration (pending)
-- 🚧 JWT verification (pending)
-- 🚧 Rate limiting (pending)
-- 🚧 Circuit breaker (pending)
+### Gateway
 
-## What to Focus On
+- ✅ Reverse proxy to auth/users services (`http-proxy-middleware`)
+- ✅ API versioning (`/v1` prefix)
+- ✅ Rate limiting (Redis-backed, per-route limits)
+- ✅ Circuit breaker (Opossum, 50% error threshold, 30s reset)
+- ✅ JWT verification middleware (extracts user context, forwards via headers)
+- ✅ Correlation ID injection
+- ✅ Swagger UI aggregation (proxies downstream `/docs`)
+- ✅ Prometheus metrics (`/metrics`)
+- ✅ Health/readiness probes (`/health`, `/ready`)
 
-1. **Shared packages first** - Create reusable types, errors, logger, middleware
-2. **Service independence** - Each service should be independently deployable
-3. **Type safety** - Use TypeScript strictly, share types via `shared/types`
-4. **Event-driven design** - Use BullMQ for async operations
-5. **Observability** - Every service should expose metrics eventually
+### Auth Service
+
+- ✅ `POST /register` — bcrypt password hashing, publishes `auth:user:registered` BullMQ event
+- ✅ `POST /login` — RS256 JWT access token + Redis-stored refresh token (7-day TTL)
+- ✅ `POST /refresh` — token rotation
+- ✅ `POST /logout` — Redis-based token blocklist
+- ✅ `GET /jwks` — public key endpoint for token verification
+- ✅ Prometheus metrics, Swagger UI, health/readiness probes
+
+### Users Service
+
+- ✅ `GET /me`, `GET /:id` — profile retrieval
+- ✅ `PATCH /me` — update displayName, bio
+- ✅ `DELETE /me` — soft delete
+- ✅ `GET /` — admin-only listing with cursor-based pagination
+- ✅ BullMQ worker (`auth:user:registered`) — auto-creates profile on registration
+- ✅ Prometheus metrics, Swagger UI, health/readiness probes
+
+### Shared Packages
+
+- ✅ `@shared/types` — `AuthUser`, `UserRole`, `ProblemDetail`, `PaginatedResponse`, `JobEvent`, `RedisKeys`
+- ✅ `@shared/errors` — `AppError`, `ValidationError`, `UnauthorizedError`, `ForbiddenError`, `NotFoundError`, `ConflictError`, `RateLimitError`, `ServiceUnavailableError`
+- ✅ `@shared/logger` — Winston JSON logger factory (`createLogger(serviceName)`)
+- ✅ `@shared/middleware` — `correlationId`, `errorHandler`, `requestLogger`, `createInterServiceAuth`, `helmetMiddleware`
+
+### Observability Stack
+
+- ✅ Prometheus (scrapes all services)
+- ✅ Grafana (provisioned dashboards + datasource)
+- ✅ Node Exporter
+
+### Not Yet Implemented
+
+- 🚧 Email verification (field exists on User model, no endpoint)
+- 🚧 Password reset
+- 🚧 OAuth/social login
+- 🚧 MFA
+- 🚧 Kubernetes manifests
+
+## What to Focus On Next
+
+1. **Email verification** — the `isEmailVerified` field is on the User model; add the endpoint + BullMQ email job
+2. **Password reset** — add forgot-password / reset-password flow via BullMQ
+3. **Admin endpoints** — expand beyond basic listing (ban, role management)
+4. **Kubernetes manifests** — `infra/k8s/` with Deployment + Service per microservice
 
 ## See Also
 

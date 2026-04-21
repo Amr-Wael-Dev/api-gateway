@@ -10,7 +10,7 @@ Distributed microservices platform with custom API Gateway. Node.js/TypeScript m
 
 - **Runtime:** Node.js with TypeScript
 - **Framework:** Express.js
-- **Database:** MongoDB (per service), PostgreSQL (admin layer - future)
+- **Database:** MongoDB (per service)
 - **Cache/Queue:** Redis + BullMQ
 - **Testing:** Vitest
 - **Linting:** ESLint with TypeScript plugin
@@ -299,23 +299,40 @@ pnpm build                  # Build all services
 
 ### Gateway Service
 
-- Routes traffic to upstream services
-- Must handle rate limiting, JWT verification, circuit breaker
-- Injects correlation IDs
-- Aggregates health checks from all services
+- Routes `/v1/auth/*` → auth service, `/v1/users/*` → users service
+- JWT verification extracts user context; passes `x-user-id` and `x-user-role` headers upstream
+- Circuit breaker: Opossum, 50% errorThresholdPercentage, 30s resetTimeout
+- Rate limits: 1000 req/min for `/v1/users`, 200 req/min for `/v1/auth`
+- Aggregates downstream `/docs` Swagger UIs at `/v1/auth/docs` and `/v1/users/docs`
+- Gateway does NOT have its own MongoDB — stateless by design
 
 ### Auth Service
 
-- Issues and validates JWT tokens
-- Manages user credentials
-- Uses Redis for refresh tokens and blocklist
-- Publishes events: `auth:user:registered`, `auth:user:password-reset-requested`
+- RS256 JWT tokens (`ACCESS_TOKEN_PRIVATE_KEY` / `ACCESS_TOKEN_PUBLIC_KEY` env vars)
+- Refresh tokens stored in Redis with key `auth:refresh:{userId}`, 7-day TTL
+- Logout adds access token to Redis blocklist (`auth:blocklist:{jti}`)
+- Publishes `auth:user:registered` (queue name constant: `Q_AUTH_USER_REGISTERED` from `@shared/types`)
+- Validators live in `src/validators/auth.validators.ts` using Zod
 
-### User Service
+### Users Service
 
-- Manages user profiles
-- Consumes `auth:user:registered` to create profiles
-- Publishes events: `user:profile:updated`, `user:account:deleted`
+- User model: `userId` (matches auth service ID), `displayName`, `bio`, `avatarUrl`, `role`, `isDeleted`
+- Profile is created asynchronously by BullMQ worker consuming `auth:user:registered`
+- Soft deletes: sets `isDeleted: true`, never removes documents
+- Admin listing: cursor-based pagination via `?cursor=<lastId>&limit=<n>` query params
+- Gateway forwards `x-user-id` / `x-user-role` headers; controllers read from `req.headers` not JWT
+
+### BullMQ Job Structure
+
+Use types from `@shared/types`:
+
+```typescript
+import {
+  BaseJobData,
+  UserRegisteredPayload,
+  Q_AUTH_USER_REGISTERED,
+} from "@shared/types";
+```
 
 ## Resources
 
